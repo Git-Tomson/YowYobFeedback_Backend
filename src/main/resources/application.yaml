@@ -2,6 +2,18 @@ spring:
   application:
     name: feedback
 
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: <votre_id>
+    password: <votre_mdp>
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   r2dbc:
     url: ${R2DBC_URL}
     username: ${POSTGRES_USER}
@@ -28,6 +40,15 @@ spring:
   main:
     web-application-type: reactive
 
+# --- AJOUT DE LA CONFIGURATION JWT ---
+app:
+  security:
+    jwt:
+      # On utilise la variable d'env JWT_SECRET du fichier .env
+      # On peut aussi définir une valeur par défaut après le ":"
+      secret: ${JWT_SECRET:your_very_secret_and_long_key_for_hmac_signature_256_bits_minimum_length_required}
+      expiration: ${JWT_EXPIRATION:3600000} # 1 heure par défaut
+
 
 logging:
   level:
@@ -50,4 +71,3 @@ springdoc:
       write-dates-as-timestamps: false
     time-zone: UTC
     default-property-inclusion: non_null
-
