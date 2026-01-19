@@ -42,5 +42,20 @@ public final class AppConstants {
 
     public static final String LOCATION_REQUIRED_FOR_ORGANIZATION_MESSAGE = "Location is required for organization type";
 
-    public static final String TOKEN_SIGNATURE = "YF_";
+    // Password reset messages
+    public static final String PASSWORD_RESET_EMAIL_SENT = "Password reset email sent successfully";
+    public static final String PASSWORD_RESET_SUCCESS = "Password reset successful";
+    public static final String INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token";
+    public static final String PASSWORD_RESET_TOKEN_ALREADY_USED = "This reset token has already been used";
+
+    // 2FA messages
+    public static final String TWO_FA_ENABLED_SUCCESS = "Two-factor authentication enabled successfully";
+    public static final String TWO_FA_DISABLED_SUCCESS = "Two-factor authentication disabled successfully";
+    public static final String INVALID_TWO_FA_CODE = "Invalid 2FA code";
+    public static final String TWO_FA_REQUIRED = "Two-factor authentication required";
+    public static final String TWO_FA_NOT_ENABLED = "Two-factor authentication is not enabled";
+
+    // Token expiration
+    public static final long PASSWORD_RESET_TOKEN_EXPIRATION_HOURS = 24;
+
 }

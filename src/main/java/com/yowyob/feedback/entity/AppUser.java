@@ -72,4 +72,13 @@ public class AppUser {
 
     @Column("certified")
     private Boolean certified;
+
+    @Column("two_fa_enabled")
+    private Boolean two_fa_enabled;
+
+    @Column("two_fa_secret")
+    private String two_fa_secret;
+
+    @Column("two_fa_backup_codes")
+    private String[] two_fa_backup_codes;
 }

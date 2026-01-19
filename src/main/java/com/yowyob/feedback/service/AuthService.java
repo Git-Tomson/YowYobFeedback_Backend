@@ -4,6 +4,7 @@ import com.yowyob.feedback.constant.AppConstants;
 import com.yowyob.feedback.dto.request.LoginRequestDTO;
 import com.yowyob.feedback.dto.request.RegisterRequestDTO;
 import com.yowyob.feedback.dto.response.AuthResponseDTO;
+import com.yowyob.feedback.dto.response.TwoFactorSetupResponseDTO;
 import com.yowyob.feedback.dto.response.UserResponseDTO;
 import com.yowyob.feedback.entity.AppUser;
 import com.yowyob.feedback.entity.Organization;
@@ -20,268 +21,276 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
-/**
- * Service class handling authentication operations.
- * Manages user registration and login business logic.
- *
- * This service handles the inheritance hierarchy where AppUser is the base class
- * and Person/Organization are subtypes. Registration creates entries in both
- * app_user table and the appropriate subtype table.
- *
- * This service uses reactive programming with Project Reactor.
- * All operations return Mono for asynchronous processing.
- *
- * @author Thomas Djotio Ndié
- * @since 2024-12-12
- * @version 1.0
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final AppUserRepository app_user_repository;
-    private final UserMapper user_mapper;
-    private final PasswordEncoder password_encoder;
-    private final OrganizationRepository organization_repository;
-    private final PersonRepository person_repository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final OrganizationRepository organizationRepository;
+    private final PersonRepository personRepository;
     private final JwtService jwtService;
+    private final TwoFactorService twoFactorService;
 
     /**
-     * Registers a new user in the system.
-     *
-     * Validation steps:
-     * 1. Checks that at least email or contact is provided
-     * 2. Validates type-specific required fields (occupation for PERSON, location for ORGANIZATION)
-     * 3. Verifies user doesn't already exist
-     * 4. Encodes password before storage
-     * 5. Saves user to app_user table
-     * 6. Saves type-specific data to person or organization table
-     *
-     * @param register_request the registration data
-     * @return Mono<AuthResponseDTO> containing registration result
-     * @throws IllegalArgumentException if validation fails
+     * Registers a new user and returns a valid JWT token immediately.
      */
-    //Le @Transactionnal garantie l'atomicité
     @Transactional
-    public Mono<AuthResponseDTO> register(RegisterRequestDTO register_request) {
+    public Mono<AuthResponseDTO> register(RegisterRequestDTO registerRequest) {
         log.info("Register attempt for email: {}, contact: {}, type: {}",
-                register_request.email(),
-                register_request.contact(),
-                register_request.user_type());
+                registerRequest.email(), registerRequest.contact(), registerRequest.user_type());
 
-        return validateRegistrationData(register_request)
-                .then(validateTypeSpecificFields(register_request))
-                .then(checkUserDoesNotExist(register_request))
-                .then(createAndSaveUser(register_request))
-                .flatMap(saved_user -> saveTypeSpecificData(saved_user, register_request))
-                .flatMap(saved_user -> buildCompleteUserResponse(saved_user,
-                        register_request.user_type()))
-                .map(this::buildSuccessfulRegistrationResponse)
+        return validateRegistrationData(registerRequest)
+                .then(validateTypeSpecificFields(registerRequest))
+                .then(checkUserDoesNotExist(registerRequest))
+                .then(createAndSaveUser(registerRequest))
+                .flatMap(savedUser -> saveTypeSpecificData(savedUser, registerRequest))
+                // Ici, on récupère l'utilisateur complet pour la réponse
+                .flatMap(savedUser -> buildCompleteUserResponse(savedUser, registerRequest.user_type())
+                        // On génère le token sur l'utilisateur FRAÎCHEMENT créé
+                        .map(userResponse -> buildAuthResponse(userResponse, savedUser, AppConstants.REGISTRATION_SUCCESS_MESSAGE))
+                )
                 .doOnSuccess(response -> log.info("User registered successfully"))
                 .doOnError(error -> log.error("Registration failed: {}", error.getMessage()));
     }
 
     /**
-     * Authenticates a user with credentials.
-     *
-     * Authentication steps:
-     * 1. Finds user by email or contact
-     * 2. Verifies password matches
-     * 3. Loads type-specific data (occupation or location)
-     * 4. Returns complete user information if successful
-     *
-     * @param login_request the login credentials
-     * @return Mono<AuthResponseDTO> containing login result
-     * @throws IllegalArgumentException if authentication fails
+     * Authenticates a user.
      */
     @Transactional
-    public Mono<AuthResponseDTO> login(LoginRequestDTO login_request) {
-        log.info("Login attempt for identifier: {}", login_request.identifier());
+    public Mono<AuthResponseDTO> login(LoginRequestDTO loginRequest) {
+        log.info("Login attempt for identifier: {}", loginRequest.identifier());
 
-        return app_user_repository.findByEmailOrContact(login_request.identifier())
-                .switchIfEmpty(Mono.error(
-                        new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
-                .flatMap(user -> validatePasswordAndBuildResponse(user,
-                        login_request.password()))
+        return app_user_repository.findByEmailOrContact(loginRequest.identifier())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .flatMap(user -> {
+                    if (!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
+                        return Mono.error(new IllegalArgumentException(AppConstants.INVALID_PASSWORD_MESSAGE));
+                    }
+                    // Si le mot de passe est bon, on construit la réponse
+                    return buildCompleteUserResponse(user, user.getUser_type())
+                            .map(userResponse -> buildAuthResponse(userResponse, user, AppConstants.LOGIN_SUCCESS_MESSAGE));
+                })
                 .doOnSuccess(response -> log.info("Login successful"))
                 .doOnError(error -> log.error("Login failed: {}", error.getMessage()));
     }
 
+    // -------------------------------------------------------------------------
+    // PRIVATE HELPER METHODS
+    // -------------------------------------------------------------------------
 
-    /**
-     * Validates that either email or contact is provided.
-     *
-     * @param register_request the registration data to validate
-     * @return Mono<Void> completes successfully if valid
-     * @throws IllegalArgumentException if validation fails
-     */
-    private Mono<Void> validateRegistrationData(RegisterRequestDTO register_request) {
-        boolean has_email = register_request.email() != null &&
-                !register_request.email().isBlank();
-        boolean has_contact = register_request.contact() != null &&
-                !register_request.contact().isBlank();
+    private Mono<Void> validateRegistrationData(RegisterRequestDTO request) {
+        boolean hasEmail = request.email() != null && !request.email().isBlank();
+        boolean hasContact = request.contact() != null && !request.contact().isBlank();
 
-        if (!has_email && !has_contact) {
-            return Mono.error(new IllegalArgumentException(
-                    AppConstants.EMAIL_OR_CONTACT_REQUIRED_MESSAGE));
+        if (!hasEmail && !hasContact) {
+            return Mono.error(new IllegalArgumentException(AppConstants.EMAIL_OR_CONTACT_REQUIRED_MESSAGE));
         }
-
         return Mono.empty();
     }
 
-    private Mono<Void> validateTypeSpecificFields(RegisterRequestDTO register_request) {
-        if (UserType.PERSON.equals(register_request.user_type())) {
-            if (register_request.occupation() == null ||
-                    register_request.occupation().isBlank()) {
-                return Mono.error(new IllegalArgumentException(
-                        AppConstants.OCCUPATION_REQUIRED_FOR_PERSON_MESSAGE));
+    private Mono<Void> validateTypeSpecificFields(RegisterRequestDTO request) {
+        if (UserType.PERSON.equals(request.user_type())) {
+            if (request.occupation() == null || request.occupation().isBlank()) {
+                return Mono.error(new IllegalArgumentException(AppConstants.OCCUPATION_REQUIRED_FOR_PERSON_MESSAGE));
             }
-        } else if (UserType.ORGANIZATION.equals(register_request.user_type())) {
-            if (register_request.location() == null ||
-                    register_request.location().isBlank()) {
-                return Mono.error(new IllegalArgumentException(
-                        AppConstants.LOCATION_REQUIRED_FOR_ORGANIZATION_MESSAGE));
+        } else if (UserType.ORGANIZATION.equals(request.user_type())) {
+            if (request.location() == null || request.location().isBlank()) {
+                return Mono.error(new IllegalArgumentException(AppConstants.LOCATION_REQUIRED_FOR_ORGANIZATION_MESSAGE));
             }
         }
         return Mono.empty();
     }
 
-    /**
-     * Checks if user already exists with given email or contact.
-     *
-     * @param register_request the registration data to check
-     * @return Mono<Void> completes successfully if user doesn't exist
-     * @throws IllegalArgumentException if user already exists
-     */
-    private Mono<Void> checkUserDoesNotExist(RegisterRequestDTO register_request) {
-        Mono<Boolean> email_exists = register_request.email() != null &&
-                !register_request.email().isBlank()
-                ? app_user_repository.existsByEmail(register_request.email())
+    private Mono<Void> checkUserDoesNotExist(RegisterRequestDTO request) {
+        // Utilisation de Mono.defer pour éviter d'exécuter la requête si l'email/contact est null
+        Mono<Boolean> emailExists = (request.email() != null && !request.email().isBlank())
+                ? app_user_repository.existsByEmail(request.email())
                 : Mono.just(false);
 
-        Mono<Boolean> contact_exists = register_request.contact() != null &&
-                !register_request.contact().isBlank()
-                ? app_user_repository.existsByContact(register_request.contact())
+        Mono<Boolean> contactExists = (request.contact() != null && !request.contact().isBlank())
+                ? app_user_repository.existsByContact(request.contact())
                 : Mono.just(false);
 
-        return Mono.zip(email_exists, contact_exists)
+        return Mono.zip(emailExists, contactExists)
                 .flatMap(tuple -> {
-                    if (tuple.getT1() || tuple.getT2()) {
-                        return Mono.error(new IllegalArgumentException(
-                                AppConstants.USER_ALREADY_EXISTS_MESSAGE));
+                    boolean exists = tuple.getT1() || tuple.getT2();
+                    if (exists) {
+                        return Mono.error(new IllegalArgumentException(AppConstants.USER_ALREADY_EXISTS_MESSAGE));
                     }
                     return Mono.empty();
                 });
     }
 
-    /**
-     * Creates user entity from DTO and saves to app_user table.
-     * Password is encoded before saving.
-     *
-     * @param register_request the registration data
-     * @return Mono<AppUser> the saved user entity
-     */
-    private Mono<AppUser> createAndSaveUser(RegisterRequestDTO register_request) {
-        AppUser user = user_mapper.toUserEntity(register_request);
-        user.setPassword(password_encoder.encode(register_request.password()));
-
+    private Mono<AppUser> createAndSaveUser(RegisterRequestDTO request) {
+        AppUser user = userMapper.toUserEntity(request);
+        user.setPassword(passwordEncoder.encode(request.password()));
         return app_user_repository.save(user);
     }
 
-    /**
-     * Saves type-specific data to person or organization table.
-     * The ID used is the same as the user_id from app_user.
-     *
-     * @param saved_user the saved app_user entity
-     * @param register_request the registration request containing type-specific data
-     * @return Mono<AppUser> the user entity after subtype save
-     */
-    private Mono<AppUser> saveTypeSpecificData(AppUser saved_user,
-                                               RegisterRequestDTO register_request) {
-        log.info("Sauvegarde spécifique pour le type : {}", saved_user.getUser_type());
-
-        if (UserType.PERSON.equals(saved_user.getUser_type())) {
-            Person person = user_mapper.toPersonEntity(register_request);
-            person.setPerson_id(saved_user.getUser_id());
-            person.setNew(true);
-            return person_repository.save(person)
-                    .map(p -> saved_user); // Utiliser map ou thenReturn
+    private Mono<AppUser> saveTypeSpecificData(AppUser savedUser, RegisterRequestDTO request) {
+        // On vérifie le type et on sauvegarde dans la table enfant correspondante
+        if (UserType.PERSON.equals(savedUser.getUser_type())) {
+            Person person = userMapper.toPersonEntity(request);
+            person.setPerson_id(savedUser.getUser_id());
+            person.setNew(true); // Crucial pour R2DBC (force INSERT au lieu d'UPDATE)
+            return personRepository.save(person).thenReturn(savedUser);
         }
 
-        if (UserType.ORGANIZATION.equals(saved_user.getUser_type())) {
-            Organization organization = user_mapper.toOrganizationEntity(register_request);
-            organization.setOrg_id(saved_user.getUser_id());
-            organization.setNew(true);
-            return organization_repository.save(organization)
-                    .thenReturn(saved_user);
+        if (UserType.ORGANIZATION.equals(savedUser.getUser_type())) {
+            Organization organization = userMapper.toOrganizationEntity(request);
+            organization.setOrg_id(savedUser.getUser_id());
+            organization.setNew(true); // Crucial pour R2DBC
+            return organizationRepository.save(organization).thenReturn(savedUser);
         }
 
-        // SI ON ARRIVE ICI, C'EST UNE ERREUR -> ROLLBACK
-        return Mono.error(new IllegalStateException("Type d'utilisateur inconnu : "
-                + saved_user.getUser_type()));
+        return Mono.error(new IllegalStateException("Unknown user type: " + savedUser.getUser_type()));
     }
 
-    /**
-     * Builds complete user response including type-specific data.
-     *
-     * @param app_user the base user entity
-     * @param user_type the type of user (PERSON or ORGANIZATION)
-     * @return Mono<UserResponseDTO> complete user information
-     */
-    private Mono<UserResponseDTO> buildCompleteUserResponse(AppUser app_user,
-                                                            UserType user_type) {
-        UserResponseDTO base_response = user_mapper.toUserResponseDTO(app_user);
+    private Mono<UserResponseDTO> buildCompleteUserResponse(AppUser appUser, UserType userType) {
+        UserResponseDTO baseResponse = userMapper.toUserResponseDTO(appUser);
 
-        if (user_type == UserType.PERSON) {
-            return person_repository.findByPersonId(app_user.getUser_id())
-                    .map(person -> {
-                        return base_response.toBuilder()
-                                .occupation(person.getOccupation())
-                                .build();
-                    });
+        if (userType == UserType.PERSON) {
+            return personRepository.findByPersonId(appUser.getUser_id())
+                    .map(person -> baseResponse.toBuilder()
+                            .occupation(person.getOccupation())
+                            .build())
+                    // Fallback si jamais la donnée n'est pas trouvée (ne devrait pas arriver en transaction)
+                    .defaultIfEmpty(baseResponse);
         } else {
-            return organization_repository.findByOrgId(app_user.getUser_id())
-                    .map(organization -> {
-                        return base_response.toBuilder()
-                                .location(organization.getLocation())
-                                .build();
-                    });
+            return organizationRepository.findByOrgId(appUser.getUser_id())
+                    .map(organization -> baseResponse.toBuilder()
+                            .location(organization.getLocation())
+                            .build())
+                    .defaultIfEmpty(baseResponse);
         }
     }
 
     /**
-     * Builds successful registration response.
-     *
-     * @param user_response the complete user response DTO
-     * @return AuthResponseDTO with user data
+     * Méthode générique pour construire la réponse finale (Login ou Register)
      */
-    private AuthResponseDTO buildSuccessfulRegistrationResponse(
-            UserResponseDTO user_response) {
+    private AuthResponseDTO buildAuthResponse(UserResponseDTO userResponse, AppUser userEntity, String message) {
         return AuthResponseDTO.builder()
-                .message(AppConstants.REGISTRATION_SUCCESS_MESSAGE)
-                .user_response_dto(user_response)
-                .token(AppConstants.TOKEN_SIGNATURE + UUID.randomUUID().toString())
+                .message(message)
+                .user_response_dto(userResponse)
+                .token(jwtService.generateToken(userEntity)) // Utilisation du vrai service JWT
                 .build();
     }
 
     /**
-     * Validates password and builds complete login response with type-specific data.
+     * Enables two-factor authentication for a user.
      *
-     * @param user the user entity
-     * @param provided_password the password to validate
-     * @return Mono<AuthResponseDTO> login response if password is valid
-     * @throws IllegalArgumentException if password is invalid
+     * @param user_id the user ID
+     * @return Mono<TwoFactorSetupResponseDTO> containing QR code and backup codes
      */
-    private Mono<AuthResponseDTO> validatePasswordAndBuildResponse(AppUser user,
-                                                                   String provided_password) {
-        if (!password_encoder.matches(provided_password, user.getPassword())) {
-            return Mono.error(new IllegalArgumentException(
-                    AppConstants.INVALID_PASSWORD_MESSAGE));
-        }
+    @Transactional
+    public Mono<TwoFactorSetupResponseDTO> enableTwoFactor(UUID user_id) {
+        log.info("Enabling 2FA for user: {}", user_id);
 
+        return app_user_repository.findById(user_id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .flatMap(user -> {
+                    try {
+                        String secret = twoFactorService.generateSecret();
+                        String qr_code_url = twoFactorService.generateQrCodeUrl(secret, user.getEmail());
+                        String[] backup_codes = twoFactorService.generateBackupCodes();
+
+                        user.setTwo_fa_enabled(true);
+                        user.setTwo_fa_secret(secret);
+                        user.setTwo_fa_backup_codes(backup_codes);
+
+                        return app_user_repository.save(user)
+                                .thenReturn(TwoFactorSetupResponseDTO.builder()
+                                        .secret(secret)
+                                        .qr_code_url(qr_code_url)
+                                        .backup_codes(backup_codes)
+                                        .build());
+                    } catch (Exception e) {
+                        return Mono.error(new RuntimeException("Failed to setup 2FA: " + e.getMessage()));
+                    }
+                })
+                .doOnSuccess(response -> log.info("2FA enabled successfully"))
+                .doOnError(error -> log.error("Failed to enable 2FA: {}", error.getMessage()));
+    }
+
+    /**
+     * Disables two-factor authentication for a user.
+     *
+     * @param user_id the user ID
+     * @return Mono<String> success message
+     */
+    @Transactional
+    public Mono<String> disableTwoFactor(UUID user_id) {
+        log.info("Disabling 2FA for user: {}", user_id);
+
+        return app_user_repository.findById(user_id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .flatMap(user -> {
+                    user.setTwo_fa_enabled(false);
+                    user.setTwo_fa_secret(null);
+                    user.setTwo_fa_backup_codes(null);
+
+                    return app_user_repository.save(user)
+                            .thenReturn(AppConstants.TWO_FA_DISABLED_SUCCESS);
+                })
+                .doOnSuccess(msg -> log.info("2FA disabled successfully"))
+                .doOnError(error -> log.error("Failed to disable 2FA: {}", error.getMessage()));
+    }
+
+    /**
+     * Verifies two-factor authentication code.
+     *
+     * @param identifier user email or contact
+     * @param code 2FA code
+     * @return Mono<AuthResponseDTO> authentication response if successful
+     */
+    @Transactional
+    public Mono<AuthResponseDTO> verifyTwoFactorCode(String identifier, String code) {
+        log.info("2FA verification attempt for: {}", identifier);
+
+        return app_user_repository.findByEmailOrContact(identifier)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .flatMap(user -> {
+                    if (!Boolean.TRUE.equals(user.getTwo_fa_enabled())) {
+                        return Mono.error(new IllegalArgumentException(AppConstants.TWO_FA_NOT_ENABLED));
+                    }
+
+                    boolean is_valid = twoFactorService.verifyCode(user.getTwo_fa_secret(), code);
+                    boolean is_backup_code = false;
+
+                    if (!is_valid && user.getTwo_fa_backup_codes() != null) {
+                        is_backup_code = twoFactorService.verifyBackupCode(user.getTwo_fa_backup_codes(), code);
+                        if (is_backup_code) {
+                            String[] updated_codes = twoFactorService.removeBackupCode(
+                                    user.getTwo_fa_backup_codes(), code);
+                            user.setTwo_fa_backup_codes(updated_codes);
+                            return app_user_repository.save(user)
+                                    .then(buildAuthResponse(user));
+                        }
+                    }
+
+                    if (!is_valid && !is_backup_code) {
+                        return Mono.error(new IllegalArgumentException(AppConstants.INVALID_TWO_FA_CODE));
+                    }
+
+                    return buildAuthResponse(user);
+                })
+                .doOnSuccess(response -> log.info("2FA verification successful"))
+                .doOnError(error -> log.error("2FA verification failed: {}", error.getMessage()));
+    }
+
+    /**
+     * Builds authentication response with user data and token.
+     *
+     * @param user the authenticated user
+     * @return Mono<AuthResponseDTO>
+     */
+    private Mono<AuthResponseDTO> buildAuthResponse(AppUser user) {
         return buildCompleteUserResponse(user, user.getUser_type())
                 .map(user_response -> AuthResponseDTO.builder()
                         .message(AppConstants.LOGIN_SUCCESS_MESSAGE)
@@ -290,4 +299,45 @@ public class AuthService {
                         .build());
     }
 
+    /**
+     * Gets current user information by identifier.
+     *
+     * @param identifier email or contact
+     * @return Mono<UserResponseDTO> current user data
+     */
+    @Transactional(readOnly = true)
+    public Mono<UserResponseDTO> getCurrentUser(String identifier) {
+        log.info("Fetching current user information for: {}", identifier);
+
+        return app_user_repository.findByEmailOrContact(identifier)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .flatMap(user -> buildCompleteUserResponse(user, user.getUser_type()))
+                .doOnSuccess(response -> log.info("User information retrieved successfully"))
+                .doOnError(error -> log.error("Failed to retrieve user information: {}", error.getMessage()));
+    }
+
+    /**
+     * Logs out the current user.
+     * In JWT authentication, this is mainly symbolic as token invalidation happens client-side.
+     *
+     * @return Mono<Map<String, String>> logout message
+     */
+    public Mono<Map<String, String>> logout() {
+        log.info("User logout processed");
+        return Mono.just(Map.of(
+                "message", "Logout successful. Please discard your authentication token."
+        ));
+    }
+
+    /**
+     * Gets user ID by identifier (email or contact).
+     *
+     * @param identifier email or contact
+     * @return Mono<UUID> user ID
+     */
+    public Mono<UUID> getUserIdByIdentifier(String identifier) {
+        return app_user_repository.findByEmailOrContact(identifier)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
+                .map(AppUser::getUser_id);
+    }
 }
