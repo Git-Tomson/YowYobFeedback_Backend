@@ -83,7 +83,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
-import static com.yowyob.feedback.constant.AppConstants.*;
+import static com.yowyob.feedback.constant.AppConstants.USER_LASTNAME_REQUIRED_MESSAGE;
+import static com.yowyob.feedback.constant.AppConstants.USER_TYPE_REQUIRED_MESSAGE;
+import static com.yowyob.feedback.constant.AppConstants.EMAIL_VALID_MESSAGE;
+import static com.yowyob.feedback.constant.AppConstants.PASSWORD_REQUIRED_MESSAGE;
+import static com.yowyob.feedback.constant.AppConstants.MIN_PASSWORD_LENGTH;
+import static com.yowyob.feedback.constant.AppConstants.MIN_PASSWORD_LENGTH_MESSAGE;
+
 
 /**
  * Data Transfer Object for user registration request (Record version).
