@@ -47,8 +47,8 @@ public class AuthService {
 
         return validateRegistrationData(registerRequest)
                 .then(validateTypeSpecificFields(registerRequest))
-                .then(checkUserDoesNotExist(registerRequest))
-                .then(createAndSaveUser(registerRequest))
+                .then(Mono.defer(()->checkUserDoesNotExist(registerRequest)))
+                .then(Mono.defer(()->createAndSaveUser(registerRequest)))
                 .flatMap(savedUser -> saveTypeSpecificData(savedUser, registerRequest))
                 // Ici, on récupère l'utilisateur complet pour la réponse
                 .flatMap(savedUser -> buildCompleteUserResponse(savedUser, registerRequest.user_type())
