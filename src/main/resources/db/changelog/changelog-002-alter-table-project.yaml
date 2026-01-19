@@ -16,3 +16,8 @@ databaseChangeLog:
                   type: TEXT
                   constraints:
                     nullable: true
+              - column:
+                  name: project_logo
+                  type: TEXT
+                  constraints:
+                    nullable: true
