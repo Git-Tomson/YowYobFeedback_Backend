@@ -37,39 +37,52 @@ public class JwtAuthenticationFilter implements WebFilter {
         String path = exchange.getRequest().getPath().value();
         log.info("Passage dans le filtre pour le chemin : {}", path);
 
+        // 1. Gestion des chemins publics
         if (isPublicPath(path)) {
             log.info("Chemin considéré comme PUBLIC : {}", path);
             return chain.filter(exchange);
         }
 
+        // 2. Extraction du header Authorization
         String auth_header = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (auth_header == null || !auth_header.startsWith(BEARER_PREFIX)) {
+            log.warn("Tentative d'accès sans token valide sur : {}", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         String token = auth_header.substring(BEARER_PREFIX.length());
 
-        try {
-            if (!jwt_service.isTokenValid(token)) {
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
-            }
+        // 3. Validation réactive et chaînage
+        return jwt_service.validateTokenAndExtractUserId(token)
+                .flatMap(userId -> {
+                    // Si le token est valide, on crée l'objet Authentication
+                    // On utilise userId (UUID) comme principal
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            Collections.emptyList()
+                    );
 
-            String username = jwt_service.extractUsername(token);
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    username, null, Collections.emptyList()
-            );
+                    log.info("Authentification réussie pour l'utilisateur : {}", userId);
 
-            return chain.filter(exchange)
-                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
-
-        } catch (Exception e) {
-            log.error("JWT validation failed: {}", e.getMessage());
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
+                    // On continue la chaîne en injectant l'authentification dans le contexte réactif
+                    return chain.filter(exchange)
+                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                })
+                // 4. Gestion du cas où le token est invalide (le Mono est vide)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("JWT invalide ou expiré pour le chemin : {}", path);
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
+                }))
+                // 5. Gestion des erreurs techniques (ex: signature corrompue, erreur de parsing)
+                .onErrorResume(e -> {
+                    log.error("Erreur lors de la validation du JWT : {}", e.getMessage());
+                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                    return exchange.getResponse().setComplete();
+                });
     }
 
     /**

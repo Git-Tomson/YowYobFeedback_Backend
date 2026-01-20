@@ -58,4 +58,41 @@ public final class AppConstants {
     // Token expiration
     public static final long PASSWORD_RESET_TOKEN_EXPIRATION_HOURS = 24;
 
+    // Project validation messages
+    public static final String PROJECT_NAME_REQUIRED_MESSAGE = "Project name is required";
+    public static final String PROJECT_NAME_TOO_LONG_MESSAGE = "Project name cannot exceed 255 characters";
+    public static final String PROJECT_DESCRIPTION_TOO_LONG_MESSAGE = "Project description is too long";
+    public static final String PROJECT_CODE_REQUIRED_MESSAGE = "Project code is required";
+    public static final String PROJECT_CODE_INVALID_LENGTH_MESSAGE = "Project code must be exactly 6 characters";
+    public static final String PROJECT_ID_REQUIRED_MESSAGE = "Project ID is required";
+
+    // Member validation messages
+    public static final String MEMBER_PSEUDO_REQUIRED_MESSAGE = "Member pseudo is required";
+    public static final String MEMBER_PSEUDO_TOO_LONG_MESSAGE = "Member pseudo cannot exceed 50 characters";
+
+    // Project business messages
+    public static final String PROJECT_CREATED_SUCCESS_MESSAGE = "Project created successfully";
+    public static final String PROJECT_UPDATED_SUCCESS_MESSAGE = "Project updated successfully";
+    public static final String PROJECT_DELETED_SUCCESS_MESSAGE = "Project deleted successfully";
+    public static final String PROJECT_NOT_FOUND_MESSAGE = "Project not found";
+    public static final String PROJECT_NAME_ALREADY_EXISTS_MESSAGE = "A project with this name already exists for this user";
+    public static final String PROJECT_CODE_INVALID_MESSAGE = "Invalid project code";
+    public static final String PROJECT_UNAUTHORIZED_MESSAGE = "You are not authorized to perform this action on this project";
+
+    // Member business messages
+    public static final String MEMBER_JOINED_SUCCESS_MESSAGE = "Successfully joined the project";
+    public static final String MEMBER_REMOVED_SUCCESS_MESSAGE = "Member removed successfully";
+    public static final String MEMBER_LEFT_SUCCESS_MESSAGE = "You have left the project";
+    public static final String MEMBER_NOT_FOUND_MESSAGE = "Member not found";
+    public static final String MEMBER_ALREADY_EXISTS_MESSAGE = "You are already a member of this project";
+    public static final String MEMBER_PSEUDO_ALREADY_EXISTS_MESSAGE = "This pseudo is already used in this project";
+    public static final String CANNOT_REMOVE_CREATOR_MESSAGE = "Cannot remove the project creator";
+    public static final String CANNOT_LEAVE_YOUR_OWN_PROJECT_MESSAGE = "You cannot leave your own project";
+
+    // Project constants
+    public static final int PROJECT_CODE_LENGTH = 6;
+    public static final int PROJECT_NAME_MAX_LENGTH = 255;
+    public static final int PROJECT_DESCRIPTION_MAX_LENGTH = 2000;
+    public static final int MEMBER_PSEUDO_MAX_LENGTH = 50;
+
 }

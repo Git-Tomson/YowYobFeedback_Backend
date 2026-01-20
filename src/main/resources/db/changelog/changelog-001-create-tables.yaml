@@ -95,13 +95,22 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
-                    foreignKeyName: fk_org_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: location
                   type: TEXT
+
+  - changeSet:
+      id: 002-add-fk-organization
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: organization
+            baseColumnNames: org_id
+            constraintName: fk_org_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 003-create-person
@@ -116,13 +125,22 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
-                    foreignKeyName: fk_person_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: occupation
                   type: TEXT
+
+  - changeSet:
+      id: 003-add-fk-person
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: person
+            baseColumnNames: person_id
+            constraintName: fk_person_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 004-create-project
@@ -155,15 +173,24 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_project_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
 
         - addUniqueConstraint:
             tableName: project
             columnNames: project_name, creator_id
             constraintName: unique_project_per_creator
+
+  - changeSet:
+      id: 004-add-fk-project
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: project
+            baseColumnNames: creator_id
+            constraintName: fk_project_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 005-create-member
@@ -189,19 +216,11 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_member_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: project_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_member_project
-                    references: project(project_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
 
         - addUniqueConstraint:
             tableName: member
@@ -212,6 +231,32 @@ databaseChangeLog:
             tableName: member
             columnNames: user_id, project_id
             constraintName: unique_member_per_user_per_project
+
+  - changeSet:
+      id: 005-add-fk-member-user
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: member
+            baseColumnNames: user_id
+            constraintName: fk_member_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
+      id: 005-add-fk-member-project
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: member
+            baseColumnNames: project_id
+            constraintName: fk_member_project
+            referencedTableName: project
+            referencedColumnNames: project_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 006-create-feedback
@@ -245,19 +290,37 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_feedback_project
-                    references: project(project_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: member_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_feedback_member
-                    references: member(member_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
+
+  - changeSet:
+      id: 006-add-fk-feedback-project
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: feedback
+            baseColumnNames: target_project_id
+            constraintName: fk_feedback_project
+            referencedTableName: project
+            referencedColumnNames: project_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
+      id: 006-add-fk-feedback-member
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: feedback
+            baseColumnNames: member_id
+            constraintName: fk_feedback_member
+            referencedTableName: member
+            referencedColumnNames: member_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 007-create-likes
@@ -271,19 +334,11 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_likes_feedback
-                    references: feedback(feedback_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: liker_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_likes_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: likes_date_time
                   type: TIMESTAMP WITH TIME ZONE
@@ -293,6 +348,32 @@ databaseChangeLog:
             tableName: likes
             columnNames: feedback_id, liker_id
             constraintName: pk_likes
+
+  - changeSet:
+      id: 007-add-fk-likes-feedback
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: likes
+            baseColumnNames: feedback_id
+            constraintName: fk_likes_feedback
+            referencedTableName: feedback
+            referencedColumnNames: feedback_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
+      id: 007-add-fk-likes-user
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: likes
+            baseColumnNames: liker_id
+            constraintName: fk_likes_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
 
   - changeSet:
       id: 009-create-comments
@@ -313,19 +394,11 @@ databaseChangeLog:
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_comments_feedback
-                    references: feedback(feedback_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: commenter_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_comments_user
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
               - column:
                   name: content
                   type: TEXT
@@ -337,33 +410,48 @@ databaseChangeLog:
                   defaultValueComputed: CURRENT_TIMESTAMP
 
   - changeSet:
+      id: 009-add-fk-comments-feedback
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: feedback_id
+            constraintName: fk_comments_feedback
+            referencedTableName: feedback
+            referencedColumnNames: feedback_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
+      id: 009-add-fk-comments-user
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comments
+            baseColumnNames: commenter_id
+            constraintName: fk_comments_user
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
       id: 0010-create-subscription
       author: tomson
       changes:
         - createTable:
             tableName: subscription
             columns:
-
               - column:
                   name: followed_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_subscription_followed
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
-
               - column:
                   name: follower_id
                   type: UUID
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_subscription_follower
-                    references: app_user(user_id)
-                    onDelete: CASCADE
-                    onUpdate: CASCADE
-
               - column:
                   name: follow_date_time
                   type: TIMESTAMP WITH TIME ZONE
@@ -378,3 +466,29 @@ databaseChangeLog:
 
         - sql:
             sql: ALTER TABLE subscription ADD CONSTRAINT check_no_self_subscription CHECK (followed_id <> follower_id)
+
+  - changeSet:
+      id: 0010-add-fk-subscription-followed
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: subscription
+            baseColumnNames: followed_id
+            constraintName: fk_subscription_followed
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+  - changeSet:
+      id: 0010-add-fk-subscription-follower
+      author: tomson
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: subscription
+            baseColumnNames: follower_id
+            constraintName: fk_subscription_follower
+            referencedTableName: app_user
+            referencedColumnNames: user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
