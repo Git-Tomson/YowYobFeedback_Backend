@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-code-and-description-to-project
+      author: tomson
+      changes:
+        - addColumn:
+            tableName: project
+            columns:
+              - column:
+                  name: code
+                  type: VARCHAR(6)
+                  constraints:
+                    nullable: false # Souvent préférable pour des colonnes ajoutées après coup
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: project_logo
+                  type: TEXT
+                  constraints:
+                    nullable: true

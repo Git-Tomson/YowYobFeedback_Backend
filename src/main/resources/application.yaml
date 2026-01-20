@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: feedback
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: <votre_id>
+    password: <votre_mdp>
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  r2dbc:
+    url: ${R2DBC_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${JDBC_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  liquibase:
+    enabled: true
+    url: ${JDBC_URL}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+  main:
+    web-application-type: reactive
+
+# --- AJOUT DE LA CONFIGURATION JWT ---
+app:
+  security:
+    jwt:
+      # On utilise la variable d'env JWT_SECRET du fichier .env
+      # On peut aussi définir une valeur par défaut après le ":"
+      secret: ${JWT_SECRET:your_very_secret_and_long_key_for_hmac_signature_256_bits_minimum_length_required}
+      expiration: ${JWT_EXPIRATION:3600000} # 1 heure par défaut
+
+
+logging:
+  level:
+    root: ${LOG_ROOT_LEVEL:INFO} # Passez le root en INFO par défaut pour le développement
+    com.yowyob.feedback: ${LOG_APP_LEVEL:DEBUG} # Ciblez votre vrai package
+    org.springframework.web: INFO # Pour voir ce que Spring WebFlux fait de nos réponses
+
+
+springdoc:
+  api-docs:
+    path: ${SPRINGDOC_API_DOCS:/v3/api-docs}
+  swagger-ui:
+    path: ${SPRINGDOC_SWAGGER_UI:/swagger-ui.html}
+    operations-sorter: alpha
+    display-request-duration: true
+
+  # Configuration Jackson pour les dates
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    default-property-inclusion: non_null
