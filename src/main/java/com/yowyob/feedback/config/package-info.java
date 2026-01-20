@@ -1,6 +1,8 @@
 /**
  * Configuration classes for application setup.
  * This package contains Spring configuration beans and security settings.
+ * Configuration classes for the feedback application.
+ * Contains security, database, and other infrastructure configurations.
  *
  * <p>Configuration classes handle:</p>
  * <ul>

@@ -309,13 +309,22 @@ public class AuthService {
     public Mono<UserResponseDTO> getCurrentUser(String identifier) {
         log.info("Fetching current user information for: {}", identifier);
 
+        // On cherche par Email, Contact OU par l'ID (UUID)
         return app_user_repository.findByEmailOrContact(identifier)
+                // Si non trouvé par email/contact, on essaie par ID
+                .switchIfEmpty(Mono.defer(() -> {
+                    try {
+                        UUID user_id = UUID.fromString(identifier);
+                        return app_user_repository.findById(user_id);
+                    } catch (IllegalArgumentException e) {
+                        return Mono.empty();
+                    }
+                }))
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(AppConstants.USER_NOT_FOUND_MESSAGE)))
                 .flatMap(user -> buildCompleteUserResponse(user, user.getUser_type()))
                 .doOnSuccess(response -> log.info("User information retrieved successfully"))
                 .doOnError(error -> log.error("Failed to retrieve user information: {}", error.getMessage()));
     }
-
     /**
      * Logs out the current user.
      * In JWT authentication, this is mainly symbolic as token invalidation happens client-side.
