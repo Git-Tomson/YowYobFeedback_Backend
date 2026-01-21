@@ -53,7 +53,7 @@ public class Project implements Persistable<UUID> {
     @Column("creator_id")
     private UUID creator_id;
 
-    @Transient
+    @Builder.Default @Transient
     private boolean is_new = false;
 
     @Override

@@ -1,6 +1,7 @@
 /**
  * Mapper classes for entity and DTO conversions.
  * This package contains manual mappers for transforming between different object types.
+ * Manual mappers handle conversion between entities and DTOs.
  *
  * <p>Mappers are responsible for:</p>
  * <ul>

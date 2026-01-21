@@ -44,7 +44,7 @@ public class Organization implements Persistable<UUID> {
     @Column("location")
     private String location;
 
-    @Transient
+    @Builder.Default @Transient
     private boolean isNew = true;
 
     @Override

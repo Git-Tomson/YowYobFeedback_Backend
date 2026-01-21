@@ -9,12 +9,11 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
- * Entity representing a feedback in the system.
- * Feedbacks are submitted by members within a project.
+ * Entity representing a comment on a feedback.
+ * Comments can be made by any user in the system.
  *
  * @author Thomas Djotio Ndié
  * @since 2025-01-20
@@ -24,31 +23,25 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("feedback")
-public class Feedback {
+@Table("comments")
+public class Comment {
 
     @Id
+    @Column("comments_id")
+    private UUID comments_id;
+
     @Column("feedback_id")
     private UUID feedback_id;
 
-    @Column("feedback_date_time")
-    private OffsetDateTime feedback_date_time;
+    @Column("commenter_id")
+    private UUID commenter_id;
 
     @Column("content")
     private String content;
 
-    @Column("attachments")
-    private List<String> attachments;
-
-    @Column("target_project_id")
-    private UUID target_project_id;
-
-    @Column("member_id")
-    private UUID member_id;
+    @Column("comments_date_time")
+    private OffsetDateTime comments_date_time;
 
     @Column("number_of_likes")
     private Integer number_of_likes;
-
-    @Column("number_of_comments")
-    private Integer number_of_comments;
 }

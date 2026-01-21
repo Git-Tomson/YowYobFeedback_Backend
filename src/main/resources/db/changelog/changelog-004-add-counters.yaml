@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-add-number-of-likes-to-feedback
+      author: tomson
+      changes:
+        - addColumn:
+            tableName: feedback
+            columns:
+              - column:
+                  name: number_of_likes
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 009-add-number-of-comments-to-feedback
+      author: tomson
+      changes:
+        - addColumn:
+            tableName: feedback
+            columns:
+              - column:
+                  name: number_of_comments
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 010-add-number-of-likes-to-comments
+      author: tomson
+      changes:
+        - addColumn:
+            tableName: comments
+            columns:
+              - column:
+                  name: number_of_likes
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
