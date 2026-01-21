@@ -96,4 +96,5 @@ public class JwtService {
         String user_id_string = claims.get(USER_ID_CLAIM, String.class);
         return UUID.fromString(user_id_string);
     }
+
 }

@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter implements WebFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private final JwtService jwt_service;
 
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();

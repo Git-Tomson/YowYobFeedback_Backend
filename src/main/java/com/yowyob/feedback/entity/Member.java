@@ -40,7 +40,7 @@ public class Member implements Persistable<UUID> {
     @Column("project_id")
     private UUID project_id;
 
-    @Transient
+    @Builder.Default @Transient
     private boolean is_new = false;
 
     @Override

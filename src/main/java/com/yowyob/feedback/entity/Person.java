@@ -44,7 +44,7 @@ public class Person implements Persistable<UUID> {
     @Column("occupation")
     private String occupation;
 
-    @Transient
+    @Builder.Default @Transient
     private boolean isNew = true;
 
     @Override

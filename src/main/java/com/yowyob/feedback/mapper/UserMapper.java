@@ -68,6 +68,7 @@ public class UserMapper {
      */
     public UserResponseDTO toUserResponseDTO (AppUser app_user){
         return UserResponseDTO.builder().user_type(app_user.getUser_type())
+                .user_id(app_user.getUser_id())
                 .user_firstname(app_user.getUser_firstname())
                 .user_lastname(app_user.getUser_lastname())
                 .email(app_user.getEmail())
