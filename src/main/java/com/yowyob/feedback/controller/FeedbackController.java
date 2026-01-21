@@ -280,15 +280,9 @@ public class FeedbackController {
                     description = "Internal server error"
             )
     })
-    /*public Mono<Void> deleteFeedback(@PathVariable("feedbackId") UUID feedback_id) {
+    public Mono<Void> deleteFeedback(@PathVariable("feedbackId") UUID feedback_id) {
         log.info("DELETE /api/v1/feedbacks/{} - Deleting feedback", feedback_id);
         return feedback_service.deleteFeedback(feedback_id);
-    }µ*/
-    public Mono<Void> deleteFeedback(@PathVariable("feedbackId") UUID feedback_id) {
-        return ReactiveSecurityContextHolder.getContext() // We make sure that the context is there
-                .flatMap(ctx -> {
-                    log.info("DELETE /api/v1/feedbacks/{} by user {}", feedback_id, ctx.getAuthentication().getName());
-                    return feedback_service.deleteFeedback(feedback_id);
-                });
     }
+
 }
