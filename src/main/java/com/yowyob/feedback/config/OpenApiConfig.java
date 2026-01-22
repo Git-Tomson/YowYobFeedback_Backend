@@ -9,36 +9,37 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration class for OpenAPI and Swagger UI documentation.
- * Defines the security schemes and global requirements for the API.
- * * @author Thomas Djotio Ndié
- * @since 30.09.25
- * @version 0.1
+ * OpenAPI/Swagger configuration for API documentation.
+ * Configures JWT authentication for Swagger UI.
+ *
+ * @author Thomas Djotio Ndié
+ * @since 2025-01-22
+ * @version 1.0
  */
 @Configuration
 public class OpenApiConfig {
 
-    /**
-     * Customizes the OpenAPI definition to include JWT security.
-     * * @return the configured OpenAPI instance
-     */
+    private static final String SECURITY_SCHEME_NAME = "Bearer Authentication";
+
     @Bean
     public OpenAPI customOpenAPI() {
-        final String security_scheme_name = "bearerAuth";
-
         return new OpenAPI()
                 .info(new Info()
-                        .title("Yowyob Feedback API")
+                        .title("YowYob Feedback API")
                         .version("1.0")
-                        .description("Documentation of APIs with JWT protection"))
+                        .description("API for feedback management system"))
                 .addSecurityItem(new SecurityRequirement()
-                        .addList(security_scheme_name))
+                        .addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
-                        .addSecuritySchemes(security_scheme_name,
+                        .addSecuritySchemes(SECURITY_SCHEME_NAME,
                                 new SecurityScheme()
-                                        .name(security_scheme_name)
+                                        .name(SECURITY_SCHEME_NAME)
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                                        .bearerFormat("JWT")
+                                        .in(SecurityScheme.In.HEADER)
+                                        .description("Enter JWT token (without 'Bearer ' prefix)")
+                        )
+                );
     }
 }

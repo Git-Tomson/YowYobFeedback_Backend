@@ -46,4 +46,17 @@ public interface FeedbackRepository extends ReactiveCrudRepository<Feedback, UUI
     @Modifying
     @Query("UPDATE feedback SET number_of_comments = number_of_comments - 1 WHERE feedback_id = :feedback_id AND number_of_comments > 0")
     Mono<Void> decrementCommentCount(UUID feedback_id);
+
+    @Modifying
+    @Query("UPDATE feedback SET number_of_likes = number_of_likes + 1 WHERE feedback_id = :feedback_id")
+    Mono<Void> incrementLikesCount(UUID feedback_id);
+
+    @Modifying
+    @Query("UPDATE feedback SET number_of_likes = number_of_likes - 1 WHERE feedback_id = :feedback_id AND number_of_likes > 0")
+    Mono<Void> decrementLikesCount(UUID feedback_id);
+
+    @Modifying
+    @Query("DELETE FROM feedback WHERE feedback_id = :feedback_id")
+    Mono<Void> deleteByIdCustom(UUID feedback_id);
+
 }

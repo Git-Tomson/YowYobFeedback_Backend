@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -154,16 +156,19 @@ public class CommentController {
 
     /**
      * Updates an existing comment.
+     * Only the user who created the comment can update it.
      *
      * @param comment_id the comment ID
      * @param request the update request
+     * @param http_request the HTTP request containing headers
      * @return Mono<CommentResponseDTO>
      */
     @PutMapping(value = "/{commentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Update comment",
-            description = "Updates an existing comment"
+            description = "Updates an existing comment. Only the creator can update it.",
+            security = @SecurityRequirement(name = "Bearer Authentication")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -176,6 +181,14 @@ public class CommentController {
                     description = "Invalid data"
             ),
             @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - You are not the owner"
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Comment not found"
             ),
@@ -186,27 +199,39 @@ public class CommentController {
     })
     public Mono<CommentResponseDTO> updateComment(
             @PathVariable("commentId") UUID comment_id,
-            @Valid @RequestBody UpdateCommentRequestDTO request) {
+            @Valid @RequestBody UpdateCommentRequestDTO request,
+            ServerHttpRequest http_request) {
         log.info("PUT /api/v1/comments/{} - Updating comment", comment_id);
-        return comment_service.updateComment(comment_id, request);
+        String authorization = http_request.getHeaders().getFirst("Authorization");
+        return comment_service.updateComment(comment_id, request, authorization);
     }
-
     /**
      * Deletes a comment.
+     * Only the user who created the comment can delete it.
      *
      * @param comment_id the comment ID
+     * @param http_request the HTTP request containing headers
      * @return Mono<Void>
      */
     @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete comment",
-            description = "Deletes an existing comment"
+            description = "Deletes an existing comment. Only the creator can delete it.",
+            security = @SecurityRequirement(name = "Bearer Authentication")
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
                     description = "Comment deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - You are not the owner"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -217,8 +242,11 @@ public class CommentController {
                     description = "Internal server error"
             )
     })
-    public Mono<Void> deleteComment(@PathVariable("commentId") UUID comment_id) {
+    public Mono<Void> deleteComment(
+            @PathVariable("commentId") UUID comment_id,
+            ServerHttpRequest http_request) {
         log.info("DELETE /api/v1/comments/{} - Deleting comment", comment_id);
-        return comment_service.deleteComment(comment_id);
+        String authorization = http_request.getHeaders().getFirst("Authorization");
+        return comment_service.deleteComment(comment_id, authorization);
     }
 }

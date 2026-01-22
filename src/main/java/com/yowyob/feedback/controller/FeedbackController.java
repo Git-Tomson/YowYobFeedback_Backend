@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -217,16 +218,19 @@ public class FeedbackController {
 
     /**
      * Updates an existing feedback.
+     * Only the member who created the feedback can update it.
      *
      * @param feedback_id the feedback ID
      * @param request the update request
+     * @param http_request the HTTP request containing headers
      * @return Mono<FeedbackResponseDTO>
      */
     @PutMapping(value = "/{feedbackId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Update feedback",
-            description = "Updates an existing feedback"
+            description = "Updates an existing feedback. Only the creator can update it.",
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "Bearer Authentication")
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -239,6 +243,14 @@ public class FeedbackController {
                     description = "Invalid data"
             ),
             @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - You are not the owner"
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Feedback not found"
             ),
@@ -249,27 +261,40 @@ public class FeedbackController {
     })
     public Mono<FeedbackResponseDTO> updateFeedback(
             @PathVariable("feedbackId") UUID feedback_id,
-            @Valid @RequestBody UpdateFeedbackRequestDTO request) {
+            @Valid @RequestBody UpdateFeedbackRequestDTO request,
+            ServerHttpRequest http_request) {
         log.info("PUT /api/v1/feedbacks/{} - Updating feedback", feedback_id);
-        return feedback_service.updateFeedback(feedback_id, request);
+        String authorization = http_request.getHeaders().getFirst("Authorization");
+        return feedback_service.updateFeedback(feedback_id, request, authorization);
     }
 
     /**
      * Deletes a feedback.
+     * Only the member who created the feedback can delete it.
      *
      * @param feedback_id the feedback ID
+     * @param http_request the HTTP request containing headers
      * @return Mono<Void>
      */
     @DeleteMapping("/{feedbackId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete feedback",
-            description = "Deletes an existing feedback"
+            description = "Deletes an existing feedback. Only the creator can delete it.",
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "Bearer Authentication")
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "204",
                     description = "Feedback deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - You are not the owner"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -280,9 +305,12 @@ public class FeedbackController {
                     description = "Internal server error"
             )
     })
-    public Mono<Void> deleteFeedback(@PathVariable("feedbackId") UUID feedback_id) {
+    public Mono<Void> deleteFeedback(
+            @PathVariable("feedbackId") UUID feedback_id,
+            ServerHttpRequest http_request) {
         log.info("DELETE /api/v1/feedbacks/{} - Deleting feedback", feedback_id);
-        return feedback_service.deleteFeedback(feedback_id);
+        String authorization = http_request.getHeaders().getFirst("Authorization");
+        return feedback_service.deleteFeedback(feedback_id, authorization);
     }
 
 }
