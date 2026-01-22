@@ -19,6 +19,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+import static com.yowyob.feedback.constant.AppConstants.FORBIDDEN_DELETE_FEEDBACK_MESSAGE;
+import static com.yowyob.feedback.constant.AppConstants.FORBIDDEN_UPDATE_FEEDBACK_MESSAGE;
+
 /**
  * Service class handling feedback operations.
  * Manages feedback creation, retrieval, update, and deletion.
@@ -43,6 +46,7 @@ public class FeedbackService {
     private final MemberRepository member_repository;
     private final ProjectRepository project_repository;
     private final FeedbackMapper feedback_mapper;
+    private final JwtService jwt_service;
 
     /**
      * Creates a new feedback.
@@ -127,45 +131,107 @@ public class FeedbackService {
         return feedback_repository.findByUserProjects(user_id)
                 .flatMap(this::buildResponseWithDetails);
     }
-
     /**
      * Updates an existing feedback.
+     * Only the member who created the feedback can update it.
      *
      * @param feedback_id the feedback ID
      * @param request the update request
+     * @param authorization_header the Authorization header containing JWT token
      * @return Mono<FeedbackResponseDTO>
+     * @throws IllegalArgumentException if user is not authorized or feedback not found
      */
     @Transactional
     public Mono<FeedbackResponseDTO> updateFeedback(UUID feedback_id,
-                                                    UpdateFeedbackRequestDTO request) {
+                                                    UpdateFeedbackRequestDTO request,
+                                                    String authorization_header) {
         log.info("Updating feedback: {}", feedback_id);
 
-        return feedback_repository.findById(feedback_id)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(FEEDBACK_NOT_FOUND_MESSAGE)))
-                .flatMap(feedback -> {
-                    feedback_mapper.updateEntity(feedback, request);
-                    return feedback_repository.save(feedback);
-                })
-                .flatMap(this::buildResponseWithDetails)
-                .doOnSuccess(response -> log.info("Feedback updated: {}", feedback_id));
+        return extractUserIdFromToken(authorization_header)
+                .flatMap(current_user_id ->
+                        feedback_repository.findById(feedback_id)
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException(FEEDBACK_NOT_FOUND_MESSAGE)))
+                                .flatMap(feedback -> validateFeedbackOwnershipForUpdate(feedback, current_user_id))
+                                .flatMap(feedback -> {
+                                    feedback_mapper.updateEntity(feedback, request);
+                                    return feedback_repository.save(feedback);
+                                })
+                                .flatMap(this::buildResponseWithDetails)
+                )
+                .doOnSuccess(response -> log.info("Feedback updated: {}", feedback_id))
+                .doOnError(error -> log.error("Failed to update feedback: {}", feedback_id, error));
+    }
+
+    private Mono<Feedback> validateFeedbackOwnershipForUpdate(Feedback feedback, UUID current_user_id) {
+        return member_repository.findById(feedback.getMember_id())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(MEMBER_NOT_FOUND_MESSAGE)))
+                .flatMap(member -> {
+                    if (!member.getUser_id().equals(current_user_id)) {
+                        return Mono.error(new IllegalArgumentException(FORBIDDEN_UPDATE_FEEDBACK_MESSAGE));
+                    }
+                    return Mono.just(feedback);
+                });
     }
 
     /**
      * Deletes a feedback.
+     * Only the member who created the feedback can delete it.
      *
      * @param feedback_id the feedback ID
+     * @param authorization_header the Authorization header containing JWT token
      * @return Mono<Void>
+     * @throws IllegalArgumentException if user is not authorized or feedback not found
      */
     @Transactional
-    public Mono<Void> deleteFeedback(UUID feedback_id) {
+    public Mono<Void> deleteFeedback(UUID feedback_id, String authorization_header) {
         log.info("Deleting feedback: {}", feedback_id);
 
-        return feedback_repository.findById(feedback_id)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException(FEEDBACK_NOT_FOUND_MESSAGE)))
-                .flatMap(feedback -> feedback_repository.deleteById(feedback_id))
-                .doOnSuccess(v -> log.info("Feedback deleted: {}", feedback_id));
+        return extractUserIdFromToken(authorization_header)
+                .flatMap(current_user_id ->
+                        feedback_repository.findById(feedback_id)
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException(FEEDBACK_NOT_FOUND_MESSAGE)))
+                                .flatMap(feedback -> validateFeedbackOwnership(feedback, current_user_id))
+                                .flatMap(feedback -> feedback_repository.deleteById(feedback_id))
+                )
+                .doOnSuccess(v -> log.info("Feedback deleted: {}", feedback_id))
+                .doOnError(error -> log.error("Failed to delete feedback: {}", feedback_id, error));
     }
 
+    /**
+     * Validates that the current user is the owner of the feedback.
+     *
+     * @param feedback the feedback to validate
+     * @param current_user_id the current user ID from JWT token
+     * @return Mono<Feedback> if validation succeeds
+     * @throws IllegalArgumentException if user is not the owner
+     */
+    private Mono<Feedback> validateFeedbackOwnership(Feedback feedback, UUID current_user_id) {
+        return member_repository.findById(feedback.getMember_id())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(MEMBER_NOT_FOUND_MESSAGE)))
+                .flatMap(member -> {
+                    if (!member.getUser_id().equals(current_user_id)) {
+                        return Mono.error(new IllegalArgumentException(FORBIDDEN_DELETE_FEEDBACK_MESSAGE));
+                    }
+                    return Mono.just(feedback);
+                });
+    }
+
+    /**
+     * Extracts user ID from JWT token.
+     *
+     * @param authorization_header the Authorization header
+     * @return Mono<UUID> the user ID
+     */
+    private Mono<UUID> extractUserIdFromToken(String authorization_header) {
+        if (authorization_header == null || !authorization_header.startsWith("Bearer ")) {
+            return Mono.error(new IllegalArgumentException("Invalid authorization header"));
+        }
+
+        String token = authorization_header.substring("Bearer ".length());
+
+        return jwt_service.validateTokenAndExtractUserId(token)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("User not found")));
+    }
     private Mono<Void> validateProjectExists(UUID project_id) {
         return project_repository.findById(project_id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(PROJECT_NOT_FOUND_MESSAGE)))

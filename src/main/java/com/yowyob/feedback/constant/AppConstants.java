@@ -95,4 +95,9 @@ public final class AppConstants {
     public static final int PROJECT_DESCRIPTION_MAX_LENGTH = 2000;
     public static final int MEMBER_PSEUDO_MAX_LENGTH = 50;
 
+    public static final String FORBIDDEN_DELETE_FEEDBACK_MESSAGE = "You are not authorized to delete this feedback";
+    public static final String FORBIDDEN_UPDATE_FEEDBACK_MESSAGE = "You are not authorized to update this feedback";
+    public static final String FORBIDDEN_DELETE_COMMENT_MESSAGE = "You are not authorized to delete this comment";
+    public static final String FORBIDDEN_UPDATE_COMMENT_MESSAGE = "You are not authorized to update this comment";
+
 }
