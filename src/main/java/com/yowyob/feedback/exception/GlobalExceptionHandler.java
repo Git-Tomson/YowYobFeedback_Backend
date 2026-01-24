@@ -143,4 +143,28 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Mono.just(error));
     }
+
+    /**
+     * Handles ResourceNotFoundException.
+     * Returns 404 Not Found with error details.
+     *
+     * @param exception the ResourceNotFoundException
+     * @return Mono containing error response with 404 status
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleResourceNotFoundException(
+            ResourceNotFoundException exception) {
+        log.error("Resource not found: {}", exception.getMessage());
+
+        ErrorResponse error_response = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error(HttpStatus.NOT_FOUND.getReasonPhrase())
+                .message(exception.getMessage())
+                .build();
+
+        return Mono.just(ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error_response));
+    }
 }
