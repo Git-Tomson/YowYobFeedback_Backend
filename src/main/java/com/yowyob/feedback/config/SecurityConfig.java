@@ -25,7 +25,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private static final String AUTH_PATH_PATTERN = "/api/v1/auth/**";
+    private static final String AUTH_PATH_PATTERN = "/api/v3/auth/**";
     private static final String API_DOCS_PATH_PATTERN = "/v3/api-docs/**";
     private static final String SWAGGER_UI_PATH_PATTERN = "/swagger-ui/**";
     private static final String SWAGGER_HTML_PATH = "/swagger-ui.html";
