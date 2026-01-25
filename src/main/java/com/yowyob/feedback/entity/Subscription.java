@@ -18,11 +18,11 @@ import java.util.UUID;
 public class Subscription {
 
     @Column("followed_id")
-    private UUID followed_id;
+    private UUID followedId;
 
     @Column("follower_id")
-    private UUID follower_id;
+    private UUID followerId;
 
     @Column("follow_date_time")
-    private OffsetDateTime follow_date_time;
+    private OffsetDateTime followDateTime;
 }
