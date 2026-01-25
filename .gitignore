@@ -36,3 +36,6 @@ build/
 target/
 .idea/
 .vscode/
+
+#Adding .env file
+.env
