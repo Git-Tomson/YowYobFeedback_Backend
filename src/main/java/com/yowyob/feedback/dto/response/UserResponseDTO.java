@@ -62,6 +62,7 @@ import com.yowyob.feedback.entity.UserType;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * Data Transfer Object for user response (Record version).
@@ -72,6 +73,7 @@ import java.time.OffsetDateTime;
  */
 @Builder(toBuilder = true)
 public record UserResponseDTO(
+        UUID user_id,
         UserType user_type,
         String user_firstname,
         String user_lastname,

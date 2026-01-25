@@ -1,6 +1,7 @@
 /**
  * Entity layer containing domain model classes.
  * This package defines the core data structures mapped to database tables.
+ * These classes map to the database schema and use Spring Data R2DBC annotations.
  *
  * <p>Entities represent:</p>
  * <ul>

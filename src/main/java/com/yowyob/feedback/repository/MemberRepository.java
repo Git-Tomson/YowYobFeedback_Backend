@@ -77,4 +77,14 @@ public interface MemberRepository extends R2dbcRepository<Member, UUID> {
      */
     @Query("DELETE FROM member WHERE user_id = :user_id AND project_id = :project_id")
     Mono<Void> deleteByUserIdAndProjectId(UUID user_id, UUID project_id);
+
+    /**
+     * Find a member by Project ID and member pseudo
+     *
+     * @param member_pseudo the member pseudo
+     * @param project_id the project id
+     * @return Mono of Member
+     */
+    @Query("SELECT * FROM member WHERE member_pseudo = :member_pseudo AND project_id = :project_id")
+    Mono<Member>findByMemberPseudoAndProjectId(String member_pseudo, UUID project_id);
 }

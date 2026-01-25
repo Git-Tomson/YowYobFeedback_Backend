@@ -11,9 +11,9 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * Entity representing a like on a feedback.
- * A user can like a feedback only once.
- * Composite primary key: (feedback_id, liker_id)
+ * Entity representing an approval (like) on a comment.
+ * A user can approve a comment only once.
+ * Composite primary key: (comments_id, approver_id)
  *
  * @author Thomas Djotio Ndié
  * @since 2025-01-21
@@ -23,15 +23,15 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("likes")
-public class Likes {
+@Table("approval")
+public class Approval {
 
-    @Column("feedback_id")
-    private UUID feedback_id;
+    @Column("comments_id")
+    private UUID comments_id;
 
-    @Column("liker_id")
-    private UUID liker_id;
+    @Column("approver_id")
+    private UUID approver_id;
 
-    @Column("likes_date_time")
-    private OffsetDateTime likes_date_time;
+    @Column("approval_date_time")
+    private OffsetDateTime approval_date_time;
 }
