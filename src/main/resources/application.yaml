@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: "optional:file:.env[.properties]"
+
   application:
     name: feedback
 
@@ -59,11 +62,16 @@ logging:
 
 springdoc:
   api-docs:
-    path: ${SPRINGDOC_API_DOCS:/v3/api-docs}
+    path: ${SPRINGDOC_API_DOCS:/v1/api-docs}
+    enabled: true
   swagger-ui:
     path: ${SPRINGDOC_SWAGGER_UI:/swagger-ui.html}
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
     operations-sorter: alpha
     display-request-duration: true
+  show-actuator: true
 
   # Configuration Jackson pour les dates
   jackson:
@@ -71,3 +79,11 @@ springdoc:
       write-dates-as-timestamps: false
     time-zone: UTC
     default-property-inclusion: non_null
+
+  # ============================================
+  # JWT (Sécurité)
+  # ============================================
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+    expiration: ${JWT_EXPIRATION:3600000}

@@ -95,4 +95,23 @@ public final class AppConstants {
     public static final int PROJECT_DESCRIPTION_MAX_LENGTH = 2000;
     public static final int MEMBER_PSEUDO_MAX_LENGTH = 50;
 
+    public static final String FORBIDDEN_DELETE_FEEDBACK_MESSAGE = "You are not authorized to delete this feedback";
+    public static final String FORBIDDEN_UPDATE_FEEDBACK_MESSAGE = "You are not authorized to update this feedback";
+    public static final String FORBIDDEN_DELETE_COMMENT_MESSAGE = "You are not authorized to delete this comment";
+    public static final String FORBIDDEN_UPDATE_COMMENT_MESSAGE = "You are not authorized to update this comment";
+
+    // Profile update messages
+    public static final String PROFILE_UPDATE_SUCCESS_MESSAGE = "Profile updated successfully";
+    public static final String EMAIL_ALREADY_USED_MESSAGE = "Email is already used by another user";
+    public static final String CONTACT_ALREADY_USED_MESSAGE = "Contact is already used by another user";
+    public static final String CANNOT_REMOVE_BOTH_EMAIL_AND_CONTACT_MESSAGE = "Cannot remove both email and contact";
+
+    // JWT messages
+    public static final String INVALID_TOKEN_MESSAGE = "Invalid or expired token";
+    public static final String MISSING_TOKEN_MESSAGE = "Authorization token is missing";
+
+    // Profile error messages
+    public static final String PERSON_DATA_NOT_FOUND_MESSAGE = "Person data not found for this user";
+    public static final String ORGANIZATION_DATA_NOT_FOUND_MESSAGE = "Organization data not found for this user";
+
 }

@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+*.log
+*.txt
+target/
+.idea/
+.vscode/
+
+#Adding .env file
+.env

@@ -1,0 +1,117 @@
+# ============================================================================
+# .dockerignore - Fichiers à exclure du contexte Docker
+# ============================================================================
+
+# --------------------------------------------------
+# Maven Build Artifacts
+# --------------------------------------------------
+target/
+# 🎯 Rôle: Répertoire de build Maven
+# 📖 Contenu: .jar, .class, rapport de tests
+# ❌ Ne pas copier car on rebuild tout dans le Dockerfile
+# 💾 Économie: ~20-50 MB
+
+!target/*.jar
+# 🎯 Rôle: EXCEPTION - Permet de copier le .jar final
+# 📖 Utilisé dans le stage BUILD → RUNTIME
+# ⚠️ Sans cette ligne, COPY target/*.jar échouerait
+
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+# 🎯 Rôle: Fichiers temporaires de Maven
+# 📖 Créés lors de release:prepare, versions:set, etc.
+# ❌ Inutiles pour le build
+
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+# 🎯 Rôle: Métadonnées de release Maven
+# ❌ Pas nécessaires dans l'image
+
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+# 🎯 Rôle: Maven wrapper (alternative à Maven installé globalement)
+# ❌ On utilise l'image maven:3.9 qui a déjà Maven
+
+# --------------------------------------------------
+# IDE Files (Environnement de développement)
+# --------------------------------------------------
+.idea/
+*.iml
+# 🎯 Rôle: Fichiers de configuration IntelliJ IDEA
+# ❌ Spécifiques à votre machine, inutiles dans le container
+# 💾 Économie: ~50 MB
+
+.vscode/
+# 🎯 Rôle: Configuration Visual Studio Code
+# ❌ Inutile dans le container
+
+.classpath
+.project
+.settings/
+# 🎯 Rôle: Fichiers Eclipse IDE
+# ❌ Inutiles dans le container
+
+# --------------------------------------------------
+# Git
+# --------------------------------------------------
+.git/
+# 🎯 Rôle: Historique Git complet
+# ❌ Très lourd (~100+ MB), inutile dans le container
+# 🔒 Sécurité: Peut contenir des commits avec secrets supprimés
+# 💾 Économie: ~100-200 MB
+
+.gitignore
+.gitattributes
+# 🎯 Rôle: Fichiers de configuration Git
+# ❌ Inutiles dans le container
+
+# --------------------------------------------------
+# Documentation
+# --------------------------------------------------
+README.md
+*.md
+# 🎯 Rôle: Documentation du projet
+# ❌ Utile pour développeurs, pas pour le runtime
+# 💡 Exception: Si vous servez la doc via l'API, ne pas ignorer
+
+# --------------------------------------------------
+# Logs
+# --------------------------------------------------
+*.log
+logs/
+# 🎯 Rôle: Fichiers de logs locaux
+# ❌ Les logs en production vont vers stdout (capturés par Koyeb)
+# 💡 Docker best practice: Logs vers stdout, pas vers fichiers
+
+# --------------------------------------------------
+# OS Files
+# --------------------------------------------------
+.DS_Store
+# 🎯 Rôle: Métadonnées macOS (fichiers cachés)
+# ❌ Pollution, inutile sur Linux (container)
+
+Thumbs.db
+# 🎯 Rôle: Cache de thumbnails Windows
+# ❌ Inutile sur Linux
+
+# --------------------------------------------------
+# Environment Variables (CRITIQUE)
+# --------------------------------------------------
+.env
+.env.local
+.env.production
+# 🎯 Rôle: Fichiers de variables d'environnement locales
+# 🔒 SÉCURITÉ CRITIQUE: Peuvent contenir des secrets
+# ❌ JAMAIS dans l'image Docker
+# 💡 Les secrets sont passés par Koyeb au runtime
+
+# --------------------------------------------------
+# Test Coverage Reports
+# --------------------------------------------------
+coverage/
+test-results/
+# 🎯 Rôle: Rapports de couverture de tests
+# ❌ Utiles localement/CI, pas dans l'image de prod

@@ -1,5 +1,8 @@
 package com.yowyob.feedback.config;
 
+//import com.yowyob.feedback.security.JwtAuthenticationFilter;
+import com.yowyob.feedback.security.SecurityContextRepository;
+import com.yowyob.feedback.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +26,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class SecurityConfig {
 
     private static final String AUTH_PATH_PATTERN = "/api/v1/auth/**";
-    private static final String API_DOCS_PATH_PATTERN = "/v3/api-docs/**";
+    private static final String API_DOCS_PATH_PATTERN = "/v1/api-docs/**";
     private static final String SWAGGER_UI_PATH_PATTERN = "/swagger-ui/**";
     private static final String SWAGGER_HTML_PATH = "/swagger-ui.html";
     private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
@@ -62,4 +65,5 @@ public class SecurityConfig {
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .build();
     }
+
 }

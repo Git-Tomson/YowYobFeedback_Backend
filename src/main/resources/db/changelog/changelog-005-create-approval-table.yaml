@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-create-approval
+      author: tomson
+      changes:
+        - createTable:
+            tableName: approval
+            columns:
+              - column:
+                  name: comments_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_approval_comment
+                    references: comments(comments_id)
+                    onDelete: CASCADE
+                    onUpdate: CASCADE
+              - column:
+                  name: approver_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_approval_user
+                    references: app_user(user_id)
+                    onDelete: CASCADE
+                    onUpdate: CASCADE
+              - column:
+                  name: approval_date_time
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - addPrimaryKey:
+            tableName: approval
+            columnNames: comments_id, approver_id
+            constraintName: pk_approval
