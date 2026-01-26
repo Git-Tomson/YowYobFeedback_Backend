@@ -10,6 +10,7 @@
  *   <li>Bean definitions and dependency injection setup</li>
  *   <li>Application-wide settings and properties</li>
  * </ul>
+ * - CorsConfig: Cross-Origin Resource Sharing configuration
  *
  * @author Thomas Djotio Ndié
  * @since 2024-12-12
