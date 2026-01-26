@@ -30,7 +30,7 @@ public class CorsConfig {
 
         // Parse allowed origins from configuration
         List<String> origins = Arrays.asList(allowed_origins.split(","));
-        cors_config.setAllowedOrigins(List.of("*"));
+        cors_config.setAllowedOrigins(origins);
 
         // Allow specific HTTP methods
         cors_config.setAllowedMethods(Arrays.asList(

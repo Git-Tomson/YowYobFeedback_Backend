@@ -177,4 +177,4 @@ jwt:
   #    - Court (15min) = Plus sécurisé mais moins pratique
   #    - Long (7 jours) = Plus pratique mais moins sécurisé
 cors:
-  allowed-origins: *
+  allowed-origins: "*"
