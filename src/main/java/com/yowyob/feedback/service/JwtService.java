@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -28,8 +29,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtService {
 
-    private static final String SECRET_KEY_STRING = "your_very_secret_and_long_key_for_hmac_signature_256_bits";
-    private static final long DEFAULT_EXPIRATION_TIME = 86400000; // 24 hours in ms
+    @Value("${jwt.secret:default_secret_for_development_only_change_in_production}")
+    private String secret_key;
+    @Value("${jwt.expiration:3600000}")
+    private long expiration_time = 86400000; // 24 hours in ms
     private static final String USER_ID_CLAIM = "user_id";
 
     /**
@@ -44,15 +47,17 @@ public class JwtService {
         extra_claims.put(USER_ID_CLAIM, user.getUser_id().toString());
 
         long current_time = System.currentTimeMillis();
-        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+        SecretKey key = Keys.hmacShaKeyFor(secret_key.getBytes(StandardCharsets.UTF_8));
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .claims(extra_claims)
                 .subject(user.getEmail() != null ? user.getEmail() : user.getContact())
                 .issuedAt(new Date(current_time))
-                .expiration(new Date(current_time + DEFAULT_EXPIRATION_TIME))
+                .expiration(new Date(current_time + expiration_time))
                 .signWith(key)
                 .compact();
+        log.debug("JWT token generated successfully, expires in {} ms", expiration_time);
+        return token;
     }
 
     /**
@@ -64,7 +69,7 @@ public class JwtService {
     public Mono<UUID> validateTokenAndExtractUserId(String token) {
         return Mono.fromCallable(() -> {
             SecretKey key = Keys.hmacShaKeyFor(
-                    SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+                    secret_key.getBytes(StandardCharsets.UTF_8));
 
             Claims claims = Jwts.parser()
                     .verifyWith(key)
@@ -85,7 +90,7 @@ public class JwtService {
      */
     public UUID extractUserIdUnsafe(String token) {
         SecretKey key = Keys.hmacShaKeyFor(
-                SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+                secret_key.getBytes(StandardCharsets.UTF_8));
 
         Claims claims = Jwts.parser()
                 .verifyWith(key)

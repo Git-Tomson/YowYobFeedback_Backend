@@ -1,0 +1,178 @@
+# ============================================
+# CONFIGURATION SERVEUR
+# ============================================
+server:
+  port: ${PORT:8080}
+  # 🎯 Rôle: Port d'écoute de l'application
+  # 📖 Explication:
+  #    - ${PORT:8080} signifie: "Lire la variable d'environnement PORT, sinon utiliser 8080"
+  #    - Koyeb injecte automatiquement PORT=8080
+  #    - Pourquoi variable ? Permet à Koyeb de changer le port si nécessaire
+  # ❌ Si mal configuré: L'app démarre mais Koyeb ne peut pas router le trafic
+
+# ============================================
+# CONFIGURATION SPRING
+# ============================================
+spring:
+  application:
+    name: yowyob-feedback-api
+    # 🎯 Rôle: Identifiant de votre application dans les logs et métriques
+    # 📖 Explication: Utile quand vous avez plusieurs microservices
+  
+  # ------------------------------------------
+  # R2DBC (Reactive Database Connectivity)
+  # ------------------------------------------
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE:require}
+    # 🎯 Rôle: URL de connexion à la base de données RÉACTIVE
+    # 📖 Décryptage de l'URL:
+    #    ┌─ r2dbc:postgresql://  → Protocole R2DBC pour PostgreSQL
+    #    ├─ ${DB_HOST}           → yowyob-feedback-db (hostname interne Koyeb)
+    #    ├─ ${DB_PORT}           → 5432 (port PostgreSQL)
+    #    ├─ ${DB_NAME}           → feedback_db
+    #    └─ ?sslmode=require     → Force le chiffrement SSL
+    # ❌ Sans SSL: Connexion refusée par Koyeb PostgreSQL
+    # ❌ Sans variables: L'app essaie de se connecter à localhost
+    
+    username: ${DB_USER}
+    # 🎯 Rôle: Nom d'utilisateur PostgreSQL
+    # 📖 Valeur: postgres (défini à l'Étape 1)
+    
+    password: ${DB_PASSWORD}
+    # 🎯 Rôle: Mot de passe PostgreSQL
+    # 📖 Valeur: Le mot de passe auto-généré à l'Étape 1
+    # 🔒 Sécurité: JAMAIS en dur ! Toujours via variable d'environnement
+    
+    pool:
+      initial-size: 5
+      # 🎯 Rôle: Nombre de connexions créées au démarrage
+      # 📖 Explication: 5 connexions prêtes immédiatement
+      # 💡 Impact performance: Démarrage légèrement plus lent, mais requêtes plus rapides après
+      
+      max-size: 20
+      # 🎯 Rôle: Nombre maximum de connexions simultanées
+      # 📖 Explication: 
+      #    - Limite de protection (évite de surcharger la DB)
+      #    - 20 = bon équilibre pour instance Koyeb Nano/Free
+      # ⚠️ Si trop bas: Requêtes en attente si trafic élevé
+      # ⚠️ Si trop haut: Consommation excessive de RAM
+      
+      max-idle-time: 30m
+      # 🎯 Rôle: Temps avant de fermer une connexion inactive
+      # 📖 Explication: Libère les ressources si peu de trafic
+      # 💡 30 minutes = bon équilibre
+      
+      validation-query: SELECT 1
+      # 🎯 Rôle: Requête pour vérifier qu'une connexion est encore valide
+      # 📖 Explication: Avant de réutiliser une connexion, R2DBC teste avec "SELECT 1"
+      # ❓ Pourquoi ? Évite d'utiliser une connexion fermée/corrompue
+  
+  # ------------------------------------------
+  # LIQUIBASE (Migration de base de données)
+  # ------------------------------------------
+  liquibase:
+    enabled: true
+    # 🎯 Rôle: Active Liquibase au démarrage de l'application
+    # 📖 Explication: Liquibase va créer/mettre à jour vos tables automatiquement
+    # ❌ Si disabled: Vos tables n'existent pas, l'app plante
+    
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    # 🎯 Rôle: Fichier principal Liquibase qui référence tous les changelogs
+    # 📖 Chemin: src/main/resources/db/changelog/db.changelog-master.yaml
+    # 📝 Structure:
+    #    db.changelog-master.yaml
+    #    ├─ include: changelog-001-create-tables.yaml
+    #    ├─ include: changelog-002-alter-table-project.yaml
+    #    ├─ include: changelog-003-add-2fa-and-password-reset.yaml
+    #    └─ include: changelog-004-add-counters.yaml
+    #       include: changelog-005-create-approval-table.yaml
+
+    
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE:require}
+    # 🎯 Rôle: URL de connexion JDBC (non réactive) pour Liquibase
+    # ❓ Pourquoi JDBC et pas R2DBC ?
+    #    - Liquibase ne supporte pas encore R2DBC nativement
+    #    - JDBC est utilisé UNIQUEMENT au démarrage pour les migrations
+    #    - Après, toutes les requêtes utilisent R2DBC (réactif)
+    # 📖 jdbc:postgresql:// au lieu de r2dbc:postgresql://
+    
+    user: ${DB_USER}
+    password: ${DB_PASSWORD}
+    # 🎯 Rôle: Même credentials que R2DBC
+
+# ============================================
+# LOGGING
+# ============================================
+logging:
+  level:
+    root: INFO
+    # 🎯 Rôle: Niveau de log par défaut pour toutes les bibliothèques
+    # 📖 INFO = Logs importants uniquement (pas de debug)
+    # 💡 En dev, vous utilisez DEBUG pour tout voir
+    
+    com.yowyob.feedback: DEBUG
+    # 🎯 Rôle: Niveau de log pour VOTRE code spécifiquement
+    # 📖 DEBUG = Voir tous les logs de vos services/controllers
+    # 💡 Utile pour déboguer en production
+    
+    org.springframework.r2dbc: DEBUG
+    # 🎯 Rôle: Voir les requêtes SQL exécutées par R2DBC
+    # 📖 Affiche: SELECT, INSERT, UPDATE avec les paramètres
+    # 💡 Très utile pour diagnostiquer les problèmes de base de données
+    # ⚠️ En production intensive, passer à INFO pour réduire les logs
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    # 🎯 Rôle: Format d'affichage des logs
+    # 📖 Exemple de sortie:
+    #    2026-01-25 14:32:05 - User registered successfully
+    # 💡 Simple et lisible dans les logs Koyeb
+
+# ============================================
+# ACTUATOR (Monitoring Spring Boot)
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+        # 🎯 Rôle: Endpoints exposés pour monitorer l'application
+        # 📖 Endpoints disponibles:
+        #    - /actuator/health   → État de l'app (UP/DOWN)
+        #    - /actuator/info     → Infos sur l'app (version, etc.)
+        #    - /actuator/metrics  → Métriques (CPU, RAM, requêtes, etc.)
+        # ❌ Sans cela: Koyeb ne peut pas vérifier si l'app est en bonne santé
+  
+  endpoint:
+    health:
+      show-details: always
+      # 🎯 Rôle: Affiche les détails de santé (DB, disk, etc.)
+      # 📖 Exemple de réponse /actuator/health:
+      #    {
+      #      "status": "UP",
+      #      "components": {
+      #        "db": { "status": "UP", "details": {...} },
+      #        "diskSpace": { "status": "UP" }
+      #      }
+      #    }
+      # 💡 Très utile pour diagnostiquer un problème (DB down, disque plein, etc.)
+
+# ============================================
+# JWT (Sécurité)
+# ============================================
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  # 🎯 Rôle: Clé secrète pour signer les tokens JWT
+  # 📖 Explication: 
+  #    - Utilisé dans votre JwtService pour générer/valider les tokens
+  #    - DOIT être au moins 256 bits (32 caractères)
+  # 🔒 Sécurité: JAMAIS en dur ! Variable d'environnement obligatoire
+  # ❌ Si compromis: Un attaquant peut créer de faux tokens
+  
+  expiration: ${JWT_EXPIRATION:3600000}
+  # 🎯 Rôle: Durée de validité d'un token en millisecondes
+  # 📖 3600000 ms = 1 heure
+  # 💡 Après 1h, l'utilisateur doit se reconnecter
+  # ⚖️ Balance sécurité/UX:
+  #    - Court (15min) = Plus sécurisé mais moins pratique
+  #    - Long (7 jours) = Plus pratique mais moins sécurisé

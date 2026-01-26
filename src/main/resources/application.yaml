@@ -79,3 +79,11 @@ springdoc:
       write-dates-as-timestamps: false
     time-zone: UTC
     default-property-inclusion: non_null
+
+  # ============================================
+  # JWT (Sécurité)
+  # ============================================
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+    expiration: ${JWT_EXPIRATION:3600000}

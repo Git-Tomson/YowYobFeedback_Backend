@@ -1,15 +1,25 @@
 databaseChangeLog:
+  # Ordre d'exécution : 001 → 002 → 003 → 004 ->005
+
   - include:
       file: db/changelog/changelog-001-create-tables.yaml
+      # 🎯 Rôle: Création des tables principales
+      # 📝 Contenu: app_user, person, organization, project, member, feedback, likes, comments, subscription
 
   - include:
       file: db/changelog/changelog-002-alter-table-project.yaml
+      # 🎯 Rôle: Ajout de colonnes à la table project
+      # 📝 Contenu: code, description, project_logo
 
   - include:
       file: db/changelog/changelog-003-add-2fa-and-password-reset.yaml
+      # 🎯 Rôle: Support de l'authentification 2FA
+      # 📝 Contenu: two_fa_enabled, two_fa_secret, password_reset_token table
 
   - include:
       file: db/changelog/changelog-004-add-counters.yaml
+      # 🎯 Rôle: Colonnes de compteurs pour optimiser les requêtes
+      # 📝 Contenu: number_of_likes, number_of_comments
 
   - include:
       file: db/changelog/changelog-005-create-approval-table.yaml
