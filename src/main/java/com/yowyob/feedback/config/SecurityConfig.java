@@ -1,6 +1,7 @@
 package com.yowyob.feedback.config;
 
 //import com.yowyob.feedback.security.JwtAuthenticationFilter;
+import com.yowyob.feedback.security.JwtAuthenticationFilter;
 import com.yowyob.feedback.security.SecurityContextRepository;
 import com.yowyob.feedback.service.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class SecurityConfig {
     private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
     private static final String HEALTH_CHECKS_PATTERN = "/api/v1/health";
     private final SecurityContextRepository security_context_repository;
+    private final JwtAuthenticationFilter jwt_authentication_filter;
+
 
     /**
      * Creates BCrypt password encoder bean.
