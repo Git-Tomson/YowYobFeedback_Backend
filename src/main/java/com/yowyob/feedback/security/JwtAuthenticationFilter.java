@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.core.annotation.Order;
 
 /**
  * JWT authentication filter for validating tokens in requests.
@@ -27,6 +28,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Order(-100) // Execute before Spring Security filters
 public class JwtAuthenticationFilter implements WebFilter {
 
     private final JwtService jwt_service;

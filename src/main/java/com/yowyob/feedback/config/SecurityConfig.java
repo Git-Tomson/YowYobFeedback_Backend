@@ -17,6 +17,7 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 
 /**
  * Security configuration for the application.
@@ -106,11 +107,9 @@ public class SecurityConfig {
                         .pathMatchers(AUTH_PATH_PATTERN).permitAll()
                         .pathMatchers(API_DOCS_PATH_PATTERN, SWAGGER_UI_PATH_PATTERN,
                                 SWAGGER_HTML_PATH).permitAll()
-                        .pathMatchers(ACTUATOR_PATH_PATTERN,
-                                HEALTH_CHECKS_PATTERN).permitAll()
+                        .pathMatchers(ACTUATOR_PATH_PATTERN).permitAll()
                         .anyExchange().authenticated()
                 )
-                .securityContextRepository(security_context_repository)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .build();
