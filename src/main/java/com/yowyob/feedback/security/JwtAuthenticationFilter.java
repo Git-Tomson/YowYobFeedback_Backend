@@ -3,7 +3,9 @@ package com.yowyob.feedback.security;
 import com.yowyob.feedback.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -15,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.core.annotation.Order;
 
 /**
  * JWT authentication filter for validating tokens in requests.
@@ -28,7 +29,7 @@ import org.springframework.core.annotation.Order;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Order(-100) // Execute before Spring Security filters
+@Order(-100)
 public class JwtAuthenticationFilter implements WebFilter {
 
     private final JwtService jwt_service;
@@ -41,7 +42,7 @@ public class JwtAuthenticationFilter implements WebFilter {
             "/api/v1/auth/",
             "/api/v1/health",
             "/v1/api-docs",
-            "/v3/api-docs",
+            "/v1/api-docs",
             "/swagger-ui",
             "/actuator"
     );
@@ -51,16 +52,17 @@ public class JwtAuthenticationFilter implements WebFilter {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getPath().value();
 
-        // Skip authentication for public paths
+        // Skip JWT validation for public paths
         if (isPublicPath(path)) {
-            log.debug("Skipping JWT validation for public path: {}", path);
+            log.debug("Public path accessed: {}", path);
             return chain.filter(exchange);
         }
 
         String auth_header = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+        // If no authorization header, let Spring Security handle it
         if (auth_header == null || !auth_header.startsWith(BEARER_PREFIX)) {
-            log.info("No JWT token found for path: {}", path);
+            log.debug("No JWT token found for protected path: {}", path);
             return chain.filter(exchange);
         }
 
@@ -69,6 +71,8 @@ public class JwtAuthenticationFilter implements WebFilter {
             String user_email = jwt_service.extractUsername(token);
 
             if (user_email != null && jwt_service.isTokenValid(token, user_email)) {
+                log.debug("Valid JWT token for user: {}", user_email);
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 user_email,
@@ -78,11 +82,14 @@ public class JwtAuthenticationFilter implements WebFilter {
 
                 return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+            } else {
+                log.warn("Invalid JWT token for path: {}", path);
             }
         } catch (Exception e) {
             log.error("JWT validation error for path {}: {}", path, e.getMessage());
         }
 
+        // Continue the filter chain - Spring Security will handle unauthorized access
         return chain.filter(exchange);
     }
 
