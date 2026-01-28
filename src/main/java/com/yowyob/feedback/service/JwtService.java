@@ -136,7 +136,7 @@ public class JwtService {
      * @return all claims from the token
      */
     private Claims extractAllClaims(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+        SecretKey key = Keys.hmacShaKeyFor(secret_key.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.parser()
                 .verifyWith(key)
