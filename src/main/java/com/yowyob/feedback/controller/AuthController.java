@@ -24,6 +24,7 @@ import com.yowyob.feedback.dto.request.PasswordResetConfirmDTO;
 import com.yowyob.feedback.dto.request.TwoFactorVerifyDTO;
 import com.yowyob.feedback.dto.response.TwoFactorSetupResponseDTO;
 import com.yowyob.feedback.service.PasswordResetService;
+import com.yowyob.feedback.util.SecurityUtil;
 import org.springframework.security.core.Authentication;
 import java.util.Map;
 
@@ -153,8 +154,8 @@ public class AuthController {
     })
     public Mono<UserResponseDTO> getCurrentUser(Authentication authentication) {
         log.info("GET /api/v1/auth/me - Fetching current user information");
-        String identifier = authentication.getName();
-        return auth_service.getCurrentUser(identifier);
+        return SecurityUtil.getAuthenticatedUserId()
+                .flatMap(user_id -> auth_service.getCurrentUser(user_id.toString()));
     }
 
     /**
