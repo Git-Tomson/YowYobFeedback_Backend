@@ -68,29 +68,29 @@ public class JwtAuthenticationFilter implements WebFilter {
 
         try {
             String token = auth_header.substring(BEARER_PREFIX_LENGTH);
-            String user_email = jwt_service.extractUsername(token);
 
-            if (user_email != null && jwt_service.isTokenValid(token, user_email)) {
-                log.debug("Valid JWT token for user: {}", user_email);
+            return jwt_service.validateTokenAndExtractUserId(token)
+                    .flatMap(user_id -> {
+                        log.debug("Valid JWT token for user ID: {}", user_id);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                user_email,
-                                null,
-                                new ArrayList<>()
-                        );
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        user_id,
+                                        null,
+                                        new ArrayList<>()
+                                );
 
-                return chain.filter(exchange)
-                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
-            } else {
-                log.warn("Invalid JWT token for path: {}", path);
-            }
+                        return chain.filter(exchange)
+                                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                    })
+                    .onErrorResume(error -> {
+                        log.warn("Invalid JWT token for path: {} - Error: {}", path, error.getMessage());
+                        return chain.filter(exchange);
+                    });
         } catch (Exception e) {
             log.error("JWT validation error for path {}: {}", path, e.getMessage());
+            return chain.filter(exchange);
         }
-
-        // Continue the filter chain - Spring Security will handle unauthorized access
-        return chain.filter(exchange);
     }
 
     /**
