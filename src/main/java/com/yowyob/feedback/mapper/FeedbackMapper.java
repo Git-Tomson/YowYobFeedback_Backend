@@ -4,6 +4,7 @@ import com.yowyob.feedback.dto.request.CreateFeedbackRequestDTO;
 import com.yowyob.feedback.dto.request.UpdateFeedbackRequestDTO;
 import com.yowyob.feedback.dto.response.FeedbackResponseDTO;
 import com.yowyob.feedback.entity.Feedback;
+import com.yowyob.feedback.repository.FeedbackWithDetails;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -45,7 +46,7 @@ public class FeedbackMapper {
      * @param feedback the feedback entity
      * @return FeedbackResponseDTO
      */
-    public FeedbackResponseDTO toResponseDTO(Feedback feedback) {
+    public FeedbackResponseDTO toFeedbackResponseDTO(Feedback feedback) {
         return FeedbackResponseDTO.builder()
                 .feedback_id(feedback.getFeedback_id())
                 .feedback_date_time(feedback.getFeedback_date_time())
@@ -57,6 +58,28 @@ public class FeedbackMapper {
                 .number_of_comments(feedback.getNumber_of_comments())
                 .build();
     }
+    /**
+     * Maps FeedbackWithDetails projection to FeedbackResponseDTO.
+     * Converts projection interface containing all enriched feedback data to response DTO.
+     *
+     * @param feedbackWithDetails the feedback projection with member and project details
+     * @return FeedbackResponseDTO
+     */
+    public FeedbackResponseDTO toFeedbackResponseDTO(FeedbackWithDetails feedbackWithDetails) {
+        return FeedbackResponseDTO.builder()
+                .feedback_id(feedbackWithDetails.getFeedbackId())
+                .feedback_date_time(feedbackWithDetails.getFeedbackDateTime())
+                .content(feedbackWithDetails.getContent())
+                .attachments(feedbackWithDetails.getAttachments() != null ? java.util.Arrays.asList(feedbackWithDetails.getAttachments()) : Collections.emptyList())
+                .target_project_id(feedbackWithDetails.getTargetProjectId())
+                .project_name(feedbackWithDetails.getProjectName())
+                .member_id(feedbackWithDetails.getMemberId())
+                .member_pseudo(feedbackWithDetails.getMemberPseudo())
+                .number_of_likes(feedbackWithDetails.getNumberOfLikes())
+                .number_of_comments(feedbackWithDetails.getNumberOfComments())
+                .build();
+    }
+
     /**
      * Maps Feedback entity to FeedbackResponseDTO with additional details.
      *
