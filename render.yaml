@@ -1,0 +1,67 @@
+services:
+  # ---------------------------------------------------
+  # 1. LE SERVICE WEB (Ton API Spring Boot)
+  # ---------------------------------------------------
+  - type: web
+    name: yowyob-feedback-api
+    runtime: docker
+    plan: free # Change à 'starter' pour éviter la mise en veille si tu as du budget
+    region: frankfurt # Choisir une région proche (ex: frankfurt ou oregon)
+    
+    # Configuration du Health Check (Basé sur ton fichier application-prod.yml)
+    healthCheckPath: /actuator/health
+    
+    # Variables d'environnement
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      - key: SERVER_PORT
+        value: 10000
+      
+      # Génération automatique d'une clé secrète forte pour le JWT
+      - key: JWT_SECRET_KEY
+        generateValue: true
+
+      - key: JWT_EXPIRATION
+        value: 3600000
+
+      # Récupération automatique des infos de la base de données ci-dessous
+      - key: DB_HOST
+        fromDatabase:
+          name: feedback_db
+          property: host
+
+      - key: DB_NAME
+        fromDatabase:
+          name: feedback_db
+          property: database
+
+      - key: DB_USER
+        fromDatabase:
+          name: feedback_db
+          property: user
+
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: feedback_db
+          property: password
+
+      - key: DB_PORT
+        fromDatabase:
+          name: feedback_db
+          property: port
+
+      - key: DB_SSL_MODE
+        value: require
+
+databases:
+  # ---------------------------------------------------
+  # 2. LA BASE DE DONNÉES (PostgreSQL)
+  # ---------------------------------------------------
+  - name: feedback_db
+    databaseName: feedback_db
+    user: tomson
+    plan: free # Attention: La BDD gratuite expire après 90 jours sur Render
+    region: frankfurt # Doit être la même région que le service web
+    ipAllowList: [] # Autorise uniquement les services internes par défaut
