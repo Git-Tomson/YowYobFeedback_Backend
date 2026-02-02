@@ -313,4 +313,36 @@ public class FeedbackController {
         return feedback_service.deleteFeedback(feedback_id, authorization);
     }
 
+    /**
+     * Retrieves all feedbacks from the application.
+     * Requires user authentication via JWT token in Authorization header.
+     *
+     * @return Flux<FeedbackResponseDTO> stream of all feedbacks
+     */
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Get all feedbacks",
+            description = "Retrieves all feedbacks from the application. Requires authentication."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Feedbacks retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = FeedbackResponseDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "User not authenticated"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error"
+            )
+    })
+    public Flux<FeedbackResponseDTO> getAllFeedbacks() {
+        log.info("GET /api/v1/feedbacks - Retrieving all feedbacks");
+        return feedback_service.getAllFeedbacks();
+    }
+
 }
