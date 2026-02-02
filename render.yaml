@@ -9,7 +9,7 @@ services:
     region: frankfurt # Choisir une région proche (ex: frankfurt ou oregon)
     
     # Configuration du Health Check (Basé sur ton fichier application-prod.yml)
-    healthCheckPath: /actuator/health
+    # healthCheckPath: /actuator/health
     
     # Variables d'environnement
     envVars:
