@@ -256,4 +256,20 @@ public class FeedbackService {
                 .map(tuple -> feedback_mapper.toResponseDTOWithDetails(
                         feedback, tuple.getT1(), tuple.getT2()));
     }
+
+    /**
+     * Retrieves all feedbacks from the application.
+     * Returns feedbacks with member pseudo and project name.
+     *
+     * @return Flux of FeedbackResponseDTO containing all feedbacks
+     */
+    @Transactional(readOnly = true)
+    public Flux<FeedbackResponseDTO> getAllFeedbacks() {
+        log.info("Fetching all feedbacks from the application");
+
+        return feedback_repository.findAllWithDetails()
+                .map(feedback_mapper::toFeedbackResponseDTO)
+                .doOnComplete(() -> log.info("All feedbacks retrieved successfully"))
+                .doOnError(error -> log.error("Error retrieving feedbacks: {}", error.getMessage()));
+    }
 }

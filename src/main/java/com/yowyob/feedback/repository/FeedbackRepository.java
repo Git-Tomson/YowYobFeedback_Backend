@@ -59,4 +59,21 @@ public interface FeedbackRepository extends ReactiveCrudRepository<Feedback, UUI
     @Query("DELETE FROM feedback WHERE feedback_id = :feedback_id")
     Mono<Void> deleteByIdCustom(UUID feedback_id);
 
+    /**
+     * Retrieves all feedbacks with member pseudo and project name.
+     * Uses explicit query due to complexity and joins.
+     *
+     * @return Flux of all feedbacks with additional member and project information
+     */
+    @Query("""
+            SELECT f.feedback_id, f.feedback_date_time, f.content, f.attachments,
+                   f.target_project_id, f.member_id, f.number_of_likes, f.number_of_comments,
+                   m.member_pseudo, p.project_name
+            FROM feedback f
+            INNER JOIN member m ON f.member_id = m.member_id
+            INNER JOIN project p ON f.target_project_id = p.project_id
+            ORDER BY f.feedback_date_time DESC
+            """)
+    Flux<FeedbackWithDetails> findAllWithDetails();
+
 }
