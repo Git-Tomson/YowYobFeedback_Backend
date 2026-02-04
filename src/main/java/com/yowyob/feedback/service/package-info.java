@@ -9,6 +9,16 @@
  *   <li>Managing transactions and data transformations</li>
  * </ul>
  *
+ * Service layer containing business logic.
+ * Services handle complex operations, transactions, and orchestration
+ * between different repositories and external services.
+ *
+ * <p>Key services:
+ * <ul>
+ *   <li>{@link com.yowyob.feedback.service.AuthService} - Authentication and authorization</li>
+ *   <li>{@link com.yowyob.feedback.service.UserService} - User management operations</li>
+ *   <li>{@link com.yowyob.feedback.service.JwtService} - JWT token operations</li>
+ * </ul>
  * @author Thomas Djotio Ndié
  * @since 2024-12-12
  * @version 1.0
