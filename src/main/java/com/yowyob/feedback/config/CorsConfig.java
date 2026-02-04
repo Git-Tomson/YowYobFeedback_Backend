@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +21,7 @@ import java.util.List;
  * @version 1.0
  */
 @Configuration
-public class CorsConfig {
+public class CorsConfig implements WebFluxConfigurer {
 
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:4200}")
     private String allowed_origins;
@@ -61,6 +63,17 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cors_config);
 
+
         return new CorsWebFilter(source);
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000")
+                // AJOUT DE "PATCH" CI-DESSOUS
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
