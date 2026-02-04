@@ -2,6 +2,7 @@ package com.yowyob.feedback.config;
 
 import com.yowyob.feedback.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -31,6 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:4200}")
+    private String allowed_origins;
     private static final String AUTH_PATH_PATTERN = "/api/v1/auth/**";
     private static final String API_DOCS_PATH_PATTERN = "/v1/api-docs/**";
     private static final String SWAGGER_UI_PATH_PATTERN = "/swagger-ui/**";
@@ -61,12 +64,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Allow specific origins (update with your frontend URLs)
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:4200",
-                "https://your-frontend-domain.com"
-        ));
+        configuration.setAllowedOrigins(Arrays.asList(allowed_origins.split(",")));
 
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList(
