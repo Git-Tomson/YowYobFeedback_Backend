@@ -1,9 +1,11 @@
 package com.yowyob.feedback.repository;
 
 import com.yowyob.feedback.entity.AppUser;
+import com.yowyob.feedback.entity.UserType;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -63,4 +65,20 @@ public interface AppUserRepository extends R2dbcRepository<AppUser, UUID> {
      * @return Mono<Boolean> true if exists, false otherwise
      */
     Mono<Boolean> existsByContact(String contact);
+
+    /**
+     * Find all users.
+     *
+     * @return Flux<AppUser> all users
+     */
+    Flux<AppUser> findAll();
+
+    /**
+     * Find all users by type.
+     *
+     * @param userType the user type (PERSON or ORGANIZATION)
+     * @return Flux<AppUser> users of the specified type
+     */
+    @Query("SELECT * FROM app_user WHERE user_type = :userType")
+    Flux<AppUser> findAllByUserType(UserType userType);
 }
