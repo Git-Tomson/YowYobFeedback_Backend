@@ -52,11 +52,21 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                // AJOUTEZ CE BLOC ICI
+                .cors(cors -> cors.configurationSource(request -> {
+                    var config = new org.springframework.web.cors.CorsConfiguration();
+                    // Remplacez par votre URL Vercel précise pour plus de sécurité
+                    config.setAllowedOriginPatterns(java.util.List.of("*"));
+                    config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(java.util.List.of("*"));
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(AUTH_PATH_PATTERN).permitAll()
-                        .pathMatchers(API_DOCS_PATH_PATTERN, SWAGGER_UI_PATH_PATTERN,
+                        .pathMatchers(AUTH_PATH_PATTERN + "**").permitAll() // Note: ajouté ** pour matcher les sous-chemins
+                        .pathMatchers(API_DOCS_PATH_PATTERN + "**", SWAGGER_UI_PATH_PATTERN + "**",
                                 SWAGGER_HTML_PATH).permitAll()
-                        .pathMatchers(ACTUATOR_PATH_PATTERN).permitAll()
+                        .pathMatchers(ACTUATOR_PATH_PATTERN + "**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .securityContextRepository(security_context_repository)
