@@ -57,7 +57,7 @@ public class SecurityConfig {
                     var config = new org.springframework.web.cors.CorsConfiguration();
                     // Remplacez par votre URL Vercel précise pour plus de sécurité
                     config.setAllowedOriginPatterns(java.util.List.of("*"));
-                    config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(java.util.List.of("*"));
                     config.setAllowCredentials(true);
                     return config;
