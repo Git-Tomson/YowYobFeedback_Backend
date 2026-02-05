@@ -46,12 +46,10 @@ cd YowYobFeedback_Backend
 
 ### 2. Configurer la base de données
 
-Créez une base de données PostgreSQL locale :
+récupéer l'image officielle de PostgesSQL sur DockerHub :
 
-```sql
-CREATE DATABASE feedback_db;
-CREATE USER tomson WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE feedback_db TO tomson;
+```bash
+docker compose up -d
 ```
 
 ### 3. Configurer les variables d'environnement
