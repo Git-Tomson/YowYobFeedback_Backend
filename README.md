@@ -5,12 +5,13 @@ API backend pour un système de gestion de retours d'expérience (feedback) perm
 ## 🚀 Technologies Utilisées
 
 ### Backend
-- **Java 17+** - Langage de programmation
-- **Spring Boot 3.x** - Framework principal
+- **Java 21** - Langage de programmation
+- **Spring Boot 4.0.2** - Framework principal
 - **Spring WebFlux** - Architecture réactive non-bloquante
 - **Spring Security** - Sécurité et authentification
 - **R2DBC** - Accès réactif aux bases de données
 - **Liquibase** - Gestion des migrations de base de données
+- **JDBC** - Utilisé au démarrage pour gérer les migrations avec Liquibase qui ne supporte pas encore R2DBC nativement
 
 ### Base de données
 - **PostgreSQL** - Base de données relationnelle
@@ -131,8 +132,8 @@ src/
 ### Authentification & Sécurité
 - ✅ Inscription et connexion utilisateurs (Personnes & Organisations)
 - ✅ Authentification JWT
-- ✅ Authentification à deux facteurs (2FA)
-- ✅ Réinitialisation de mot de passe
+- X Authentification à deux facteurs (2FA): Nécessite une adresse mail liée à un nom de domaine  
+- X Réinitialisation de mot de passe: Nécessite une adresse mail liée à un nom de domaine
 - ✅ Hashage sécurisé des mots de passe (BCrypt)
 
 ### Gestion des Projets
@@ -148,7 +149,6 @@ src/
 
 ### Social
 - ✅ Abonnements entre utilisateurs
-- ✅ Certification des utilisateurs
 
 ## 👥 Auteur(Superviseur académique du projet)
 
