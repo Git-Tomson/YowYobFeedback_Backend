@@ -13,8 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+import com.yowyob.feedback.util.SecurityUtil;
 
 /**
  * REST controller for user management endpoints.
@@ -39,16 +43,16 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * Retrieves all users in the system.
+     * Retrieves all users in the system except the current authenticated user.
      * Requires authentication.
      *
-     * @return Flux<UserResponseDTO> stream of all users
+     * @return Flux<UserResponseDTO> stream of all users except current user
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Get all users",
-            description = "Retrieves all users regardless of type. Requires authentication."
+            description = "Retrieves all users except the current authenticated user. Requires authentication."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -66,21 +70,22 @@ public class UserController {
             )
     })
     public Flux<UserResponseDTO> getAllUsers() {
-        log.info("GET /api/v1/users - Retrieving all users");
-        return userService.getAllUsers();
+        log.info("GET /api/v1/users - Retrieving all users except current user");
+        return SecurityUtil.getAuthenticatedUserId()
+                .flatMapMany(currentUserId -> userService.getAllUsers(currentUserId));
     }
 
     /**
-     * Retrieves all users of type PERSON.
+     * Retrieves all users of type PERSON except the current authenticated user.
      * Requires authentication.
      *
-     * @return Flux<UserResponseDTO> stream of person-type users
+     * @return Flux<UserResponseDTO> stream of person-type users except current user
      */
     @GetMapping(value = "/persons", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Get all persons",
-            description = "Retrieves all users of type PERSON with their occupation. Requires authentication."
+            description = "Retrieves all users of type PERSON except the current authenticated user. Requires authentication."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -98,21 +103,22 @@ public class UserController {
             )
     })
     public Flux<UserResponseDTO> getAllPersons() {
-        log.info("GET /api/v1/users/persons - Retrieving all PERSON users");
-        return userService.getAllPersons();
+        log.info("GET /api/v1/users/persons - Retrieving all PERSON users except current user");
+        return SecurityUtil.getAuthenticatedUserId()
+                .flatMapMany(currentUserId -> userService.getAllPersons(currentUserId));
     }
 
     /**
-     * Retrieves all users of type ORGANIZATION.
+     * Retrieves all users of type ORGANIZATION except the current authenticated user.
      * Requires authentication.
      *
-     * @return Flux<UserResponseDTO> stream of organization-type users
+     * @return Flux<UserResponseDTO> stream of organization-type users except current user
      */
     @GetMapping(value = "/organizations", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Get all organizations",
-            description = "Retrieves all users of type ORGANIZATION with their location. Requires authentication."
+            description = "Retrieves all users of type ORGANIZATION except the current authenticated user. Requires authentication."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -130,7 +136,8 @@ public class UserController {
             )
     })
     public Flux<UserResponseDTO> getAllOrganizations() {
-        log.info("GET /api/v1/users/organizations - Retrieving all ORGANIZATION users");
-        return userService.getAllOrganizations();
+        log.info("GET /api/v1/users/organizations - Retrieving all ORGANIZATION users except current user");
+        return SecurityUtil.getAuthenticatedUserId()
+                .flatMapMany(currentUserId -> userService.getAllOrganizations(currentUserId));
     }
 }

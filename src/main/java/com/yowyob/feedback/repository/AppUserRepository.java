@@ -81,4 +81,23 @@ public interface AppUserRepository extends R2dbcRepository<AppUser, UUID> {
      */
     @Query("SELECT * FROM app_user WHERE user_type = :userType")
     Flux<AppUser> findAllByUserType(UserType userType);
+
+    /**
+     * Find all users except the one with the given user_id.
+     *
+     * @param userId the user ID to exclude
+     * @return Flux<AppUser> all users except the specified one
+     */
+    @Query("SELECT * FROM app_user WHERE user_id != :userId")
+    Flux<AppUser> findAllExcludingUser(UUID userId);
+
+    /**
+     * Find all users by type except the one with the given user_id.
+     *
+     * @param userType the user type (PERSON or ORGANIZATION)
+     * @param userId the user ID to exclude
+     * @return Flux<AppUser> users of the specified type except the specified user
+     */
+    @Query("SELECT * FROM app_user WHERE user_type = :userType AND user_id != :userId")
+    Flux<AppUser> findAllByUserTypeExcludingUser(UserType userType, UUID userId);
 }
