@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 /**
  * Service for user management operations.
  * Handles retrieval and filtering of user data.
@@ -33,57 +35,52 @@ public class UserService {
     private final UserMapper userMapper;
 
     /**
-     * Retrieves all users in the system.
+     * Retrieves all users in the system except the current user.
      *
-     * @return Flux<UserResponseDTO> all users with complete information
+     * @param currentUserId the ID of the current authenticated user to exclude
+     * @return Flux<UserResponseDTO> all users except the current user with complete information
      */
     @Transactional(readOnly = true)
-    public Flux<UserResponseDTO> getAllUsers() {
-        log.info("Fetching all users");
+    public Flux<UserResponseDTO> getAllUsers(UUID currentUserId) {
+        log.info("Fetching all users except user: {}", currentUserId);
 
-        return appUserRepository.findAll()
+        return appUserRepository.findAllExcludingUser(currentUserId)
                 .flatMap(this::enrichUserResponse)
-                .doOnComplete(() -> log.info("All users retrieved successfully"))
+                .doOnComplete(() -> log.info("All users retrieved successfully (excluding current user)"))
                 .doOnError(error -> log.error("Failed to retrieve all users: {}", error.getMessage()));
     }
 
     /**
-     * Retrieves all users of type PERSON.
+     * Retrieves all users of type PERSON except the current user.
      *
-     * @return Flux<UserResponseDTO> all person-type users with occupation
+     * @param currentUserId the ID of the current authenticated user to exclude
+     * @return Flux<UserResponseDTO> all person-type users except the current user with occupation
      */
     @Transactional(readOnly = true)
-    public Flux<UserResponseDTO> getAllPersons() {
-        log.info("Fetching all PERSON users");
+    public Flux<UserResponseDTO> getAllPersons(UUID currentUserId) {
+        log.info("Fetching all PERSON users except user: {}", currentUserId);
 
-        return appUserRepository.findAllByUserType(UserType.PERSON)
+        return appUserRepository.findAllByUserTypeExcludingUser(UserType.PERSON, currentUserId)
                 .flatMap(this::enrichUserResponse)
-                .doOnComplete(() -> log.info("All PERSON users retrieved successfully"))
+                .doOnComplete(() -> log.info("All PERSON users retrieved successfully (excluding current user)"))
                 .doOnError(error -> log.error("Failed to retrieve PERSON users: {}", error.getMessage()));
     }
 
     /**
-     * Retrieves all users of type ORGANIZATION.
+     * Retrieves all users of type ORGANIZATION except the current user.
      *
-     * @return Flux<UserResponseDTO> all organization-type users with location
+     * @param currentUserId the ID of the current authenticated user to exclude
+     * @return Flux<UserResponseDTO> all organization-type users except the current user with location
      */
     @Transactional(readOnly = true)
-    public Flux<UserResponseDTO> getAllOrganizations() {
-        log.info("Fetching all ORGANIZATION users");
+    public Flux<UserResponseDTO> getAllOrganizations(UUID currentUserId) {
+        log.info("Fetching all ORGANIZATION users except user: {}", currentUserId);
 
-        return appUserRepository.findAllByUserType(UserType.ORGANIZATION)
+        return appUserRepository.findAllByUserTypeExcludingUser(UserType.ORGANIZATION, currentUserId)
                 .flatMap(this::enrichUserResponse)
-                .doOnComplete(() -> log.info("All ORGANIZATION users retrieved successfully"))
+                .doOnComplete(() -> log.info("All ORGANIZATION users retrieved successfully (excluding current user)"))
                 .doOnError(error -> log.error("Failed to retrieve ORGANIZATION users: {}", error.getMessage()));
     }
-
-    /**
-     * Enriches user response with type-specific data.
-     * Adds occupation for PERSON or location for ORGANIZATION.
-     *
-     * @param appUser the base user entity
-     * @return Mono<UserResponseDTO> enriched user response
-     */
     private Mono<UserResponseDTO> enrichUserResponse(AppUser appUser) {
         UserResponseDTO baseResponse = userMapper.toUserResponseDTO(appUser);
 
