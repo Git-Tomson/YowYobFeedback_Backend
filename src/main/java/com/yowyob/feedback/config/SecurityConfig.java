@@ -29,6 +29,8 @@ public class SecurityConfig {
     private static final String API_DOCS_PATH_PATTERN = "/v1/api-docs/";
     private static final String SWAGGER_UI_PATH_PATTERN = "/swagger-ui/";
     private static final String SWAGGER_HTML_PATH = "/swagger-ui.html";
+    private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
+    private static final String ALL_FEEDBACKS_PATH = "/api/v1/feedbacks/all";
     private static final String ACTUATOR_PATH_PATTERN = "/actuator/";
     private static final String HEALTH_CHEICK_PATTERN = "/api/v1/health";
 
@@ -67,6 +69,7 @@ public class SecurityConfig {
                         .pathMatchers(AUTH_PATH_PATTERN + "**").permitAll() // Note: ajouté ** pour matcher les sous-chemins
                         .pathMatchers(API_DOCS_PATH_PATTERN + "**", SWAGGER_UI_PATH_PATTERN + "**",
                                 SWAGGER_HTML_PATH).permitAll()
+                        .pathMatchers(ACTUATOR_PATH_PATTERN, ALL_FEEDBACKS_PATH).permitAll()
                         .pathMatchers(ACTUATOR_PATH_PATTERN + "**").permitAll()
                         .pathMatchers(HEALTH_CHEICK_PATTERN).permitAll()
                         .anyExchange().authenticated()

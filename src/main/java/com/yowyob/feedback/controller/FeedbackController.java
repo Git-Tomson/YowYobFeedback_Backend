@@ -319,7 +319,7 @@ public class FeedbackController {
      *
      * @return Flux<FeedbackResponseDTO> stream of all feedbacks
      */
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/all",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Get all feedbacks",
@@ -341,7 +341,7 @@ public class FeedbackController {
             )
     })
     public Flux<FeedbackResponseDTO> getAllFeedbacks() {
-        log.info("GET /api/v1/feedbacks - Retrieving all feedbacks");
+        log.info("GET /api/v1/feedbacks/all - Retrieving all feedbacks");
         return feedback_service.getAllFeedbacks();
     }
 
