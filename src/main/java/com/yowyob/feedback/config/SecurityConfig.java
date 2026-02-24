@@ -30,6 +30,7 @@ public class SecurityConfig {
     private static final String SWAGGER_UI_PATH_PATTERN = "/swagger-ui/**";
     private static final String SWAGGER_HTML_PATH = "/swagger-ui.html";
     private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
+    private static final String ALL_FEEDBACKS_PATH = "/api/v1/feedbacks/all";
 
     private final SecurityContextRepository security_context_repository;
 
@@ -57,7 +58,7 @@ public class SecurityConfig {
                         .pathMatchers(AUTH_PATH_PATTERN).permitAll()
                         .pathMatchers(API_DOCS_PATH_PATTERN, SWAGGER_UI_PATH_PATTERN,
                                 SWAGGER_HTML_PATH).permitAll()
-                        .pathMatchers(ACTUATOR_PATH_PATTERN).permitAll()
+                        .pathMatchers(ACTUATOR_PATH_PATTERN, ALL_FEEDBACKS_PATH).permitAll()
                         .anyExchange().authenticated()
                 )
                 .securityContextRepository(security_context_repository)
