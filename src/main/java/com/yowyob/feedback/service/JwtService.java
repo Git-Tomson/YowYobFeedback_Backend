@@ -17,6 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import io.jsonwebtoken.Claims;
+import java.util.Date;
+import java.util.function.Function;
+
 /**
  * Service handling JSON Web Token (JWT) generation and validation.
  *
@@ -100,6 +104,77 @@ public class JwtService {
 
         String user_id_string = claims.get(USER_ID_CLAIM, String.class);
         return UUID.fromString(user_id_string);
+    }
+
+    /**
+     * Extracts the username (email) from the JWT token.
+     *
+     * @param token the JWT token
+     * @return the username/email from the token
+     */
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * Extracts a specific claim from the token.
+     *
+     * @param token the JWT token
+     * @param claims_resolver function to extract the claim
+     * @param <T> the type of the claim
+     * @return the extracted claim value
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> claims_resolver) {
+        final Claims claims = extractAllClaims(token);
+        return claims_resolver.apply(claims);
+    }
+
+    /**
+     * Extracts all claims from the token.
+     *
+     * @param token the JWT token
+     * @return all claims from the token
+     */
+    private Claims extractAllClaims(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(secret_key.getBytes(StandardCharsets.UTF_8));
+
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    /**
+     * Checks if the token is valid for the given username.
+     *
+     * @param token the JWT token
+     * @param username the username to validate against
+     * @return true if token is valid, false otherwise
+     */
+    public boolean isTokenValid(String token, String username) {
+        final String token_username = extractUsername(token);
+        return (token_username.equals(username) && !isTokenExpired(token));
+    }
+
+    /**
+     * Checks if the token is expired.
+     *
+     * @param token the JWT token
+     * @return true if token is expired, false otherwise
+     */
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    /**
+     * Extracts the expiration date from the token.
+     *
+     * @param token the JWT token
+     * @return the expiration date
+     */
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
 }

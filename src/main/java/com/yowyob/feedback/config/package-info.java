@@ -10,6 +10,8 @@
  *   <li>Bean definitions and dependency injection setup</li>
  *   <li>Application-wide settings and properties</li>
  * </ul>
+ * - CorsConfig: Cross-Origin Resource Sharing configuration
+ *  Contains Spring configuration for security, CORS, and other cross-cutting concerns.
  *
  * @author Thomas Djotio Ndié
  * @since 2024-12-12

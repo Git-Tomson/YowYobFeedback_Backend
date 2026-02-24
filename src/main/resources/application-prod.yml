@@ -9,6 +9,11 @@ server:
   #    - Koyeb injecte automatiquement PORT=8080
   #    - Pourquoi variable ? Permet à Koyeb de changer le port si nécessaire
   # ❌ Si mal configuré: L'app démarre mais Koyeb ne peut pas router le trafic
+  forward-headers-strategy: framework
+  #Spring ne regarde pas sa connexion mais les headers envoyé par le proxy(load balancer) de koyeb
+  #Le proxy de Koyeb envoie des headers comme X-Forwarded-Proto: https
+  #Spring lit ce header et comprend que, pour l'utilisateur final,
+  #il doit se comporter comme s'il était en HTTPS.
 
 # ============================================
 # CONFIGURATION SPRING
@@ -176,3 +181,5 @@ jwt:
   # ⚖️ Balance sécurité/UX:
   #    - Court (15min) = Plus sécurisé mais moins pratique
   #    - Long (7 jours) = Plus pratique mais moins sécurisé
+cors:
+  allowed-origins: "*"
