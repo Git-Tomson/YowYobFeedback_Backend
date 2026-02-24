@@ -31,7 +31,6 @@ public class SecurityConfig {
     private static final String SWAGGER_HTML_PATH = "/swagger-ui.html";
     private static final String ACTUATOR_PATH_PATTERN = "/actuator/**";
     private static final String ALL_FEEDBACKS_PATH = "/api/v1/feedbacks/all";
-    private static final String ACTUATOR_PATH_PATTERN = "/actuator/";
     private static final String HEALTH_CHEICK_PATTERN = "/api/v1/health";
 
     private final SecurityContextRepository security_context_repository;
